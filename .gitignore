@@ -1,0 +1,44 @@
+# Maven build output
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Eclipse / IntelliJ / VSCode project files
+.classpath
+.project
+.settings/
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Generated files
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+
+# Dependency directories
+node_modules/
+lib/
+
+# Test results
+surefire-reports/
+failsafe-reports/
+
+# Maven wrapper files
+.mvn/wrapper/
+mvnw
+mvnw.cmd

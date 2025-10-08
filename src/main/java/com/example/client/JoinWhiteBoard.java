@@ -1,5 +1,5 @@
 package com.example.client;
 
-public class ClientGUI {
+public class JoinWhiteBoard {
     
 }
