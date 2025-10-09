@@ -39,6 +39,7 @@ public abstract class AbstractWhiteBoardGUI extends JFrame implements ActionList
     @Override
     public void actionPerformed(ActionEvent e) {
         switch (e.getActionCommand()) {
+            // TODO implement a shape picker 
             case "CLEAR":
                 canvas.clear();
                 broadcastClear(); // implemented differently by client/server
