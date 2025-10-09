@@ -20,7 +20,7 @@ public class WhiteBoardCanvas extends JPanel {
     // Line tool fields
     private int startX, startY;
     private int currentX, currentY;
-    private boolean drawingLine = false;
+    private boolean drawing = false;
 
     public WhiteBoardCanvas(int width, int height) {
         setPreferredSize(new Dimension(width, height));
@@ -31,24 +31,46 @@ public class WhiteBoardCanvas extends JPanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (currentTool == Tool.LINE) {
-                    startX = e.getX();
-                    startY = e.getY();
-                    drawingLine = true;
-                    currentX = startX;
-                    currentY = startY;
-                } else if (currentTool == Tool.FREE_DRAW) {
-                    prevX = e.getX();
-                    prevY = e.getY();
+                switch (currentTool) {
+                    case LINE:
+                        startX = e.getX();
+                        startY = e.getY();
+                        drawing = true;
+                        currentX = startX;
+                        currentY = startY;
+                        break;
+                    // TODO implement triangle and allow to drag its size / resize
+                    case TRIANGLE:
+                        startX = e.getX();
+                        startY = e.getY();
+                        drawing = true;
+                        currentX = startX;
+                        currentY = startY;
+                        break;
+                    case FREE_DRAW:
+                        prevX = e.getX();
+                        prevY = e.getY();
+                        break;
+
                 }
+
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (currentTool == Tool.LINE && drawingLine) {
+                if (currentTool == Tool.LINE && drawing) {
                     // Commit line to the canvas image
                     g2d.drawLine(startX, startY, e.getX(), e.getY());
-                    drawingLine = false;
+                    drawing = false;
+                    repaint();
+                }
+                if (currentTool == Tool.TRIANGLE && drawing) {
+                    // Commit triangle to the canvas image
+                    int[] xPoints = { startX, currentX, startX + (startX - currentX) };
+                    int[] yPoints = { startY, currentY, currentY };
+                    int numPoints = 3;
+                    g2d.drawPolygon(xPoints, yPoints, numPoints);
+                    drawing = false;
                     repaint();
                 }
             }
@@ -65,6 +87,13 @@ public class WhiteBoardCanvas extends JPanel {
                         repaint();
                         prevX = x;
                         prevY = y;
+                        break;
+
+                    case TRIANGLE:
+                        // Update current mouse position for preview
+                        currentX = e.getX();
+                        currentY = e.getY();
+                        repaint(); // will trigger paintComponent to show preview
                         break;
 
                     case LINE:
@@ -94,9 +123,18 @@ public class WhiteBoardCanvas extends JPanel {
         g.drawImage(canvasImage, 0, 0, null);
 
         // Draw line preview if currently drawing
-        if (currentTool == Tool.LINE && drawingLine) {
+        if (currentTool == Tool.LINE && drawing) {
             g.setColor(Color.GRAY); // preview color
             g.drawLine(startX, startY, currentX, currentY);
+        }
+
+        // Draw triangle preview if currently drawing
+        if (currentTool == Tool.TRIANGLE && drawing) {
+            g.setColor(Color.GRAY); // preview color
+            int[] xPoints = { startX, currentX, startX + (startX - currentX) };
+            int[] yPoints = { startY, currentY, currentY };
+            int numPoints = 3;
+            g.drawPolygon(xPoints, yPoints, numPoints);
         }
     }
 
@@ -119,4 +157,5 @@ public class WhiteBoardCanvas extends JPanel {
     public void setCurrentTool(Tool newTool) {
         currentTool = newTool;
     }
+
 }
