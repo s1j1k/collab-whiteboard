@@ -9,8 +9,4 @@ public class IconUtils {
         Image img = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
         return new ImageIcon(img);
     }
-
-    public static ImageIcon loadScaledIcon(String path) {
-        super(path, 24, 24);
-    }
 }
