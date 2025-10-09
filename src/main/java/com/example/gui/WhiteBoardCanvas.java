@@ -1,6 +1,9 @@
 package com.example.gui;
 
 import javax.swing.*;
+
+import com.example.shared.Tool;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -13,6 +16,7 @@ public class WhiteBoardCanvas extends JPanel {
     private Graphics2D g2d;
     private int prevX, prevY;
     private boolean drawing = false;
+    private Tool currentTool;
 
     public WhiteBoardCanvas(int width, int height) {
         setPreferredSize(new Dimension(width, height));
@@ -20,6 +24,7 @@ public class WhiteBoardCanvas extends JPanel {
         setDoubleBuffered(true);
         initCanvas();
         
+        // TODO implement different tools
 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -38,7 +43,7 @@ public class WhiteBoardCanvas extends JPanel {
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                if (drawing) {
+                if (currentTool == Tool.FREE_DRAW) {
                     int x = e.getX();
                     int y = e.getY();
                     g2d.drawLine(prevX, prevY, x, y);
@@ -81,5 +86,10 @@ public class WhiteBoardCanvas extends JPanel {
     // Change drawing colour
     public void setDrawingColor(Color newColor) {
         g2d.setColor(newColor);
+    }
+
+    // Change current tool
+    public void setCurrentTool(Tool newTool) {
+        currentTool = newTool;
     }
 }

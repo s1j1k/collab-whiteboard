@@ -2,6 +2,7 @@ package com.example.gui;
 
 import javax.swing.*;
 
+import com.example.shared.Tool;
 import com.formdev.flatlaf.FlatLightLaf;
 
 import java.awt.*;
@@ -38,18 +39,24 @@ public abstract class AbstractWhiteBoardGUI extends JFrame implements ActionList
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        switch (e.getActionCommand()) {
-            // TODO implement a shape picker 
-            case "CLEAR":
+        String cmd = e.getActionCommand();
+        // TODO implement shapes
+        try {
+            // Try to parse Tool enum
+            Tool selectedTool = Tool.valueOf(cmd);
+            canvas.setCurrentTool(selectedTool);
+        } catch (IllegalArgumentException ex) {
+            // Not a tool, handle other commands
+            if ("CLEAR".equals(cmd)) {
                 canvas.clear();
                 broadcastClear(); // implemented differently by client/server
-                break;
-            case "COLOR":
+            } else if ("COLOR".equals(cmd)) {
                 Color newColor = JColorChooser.showDialog(this, "Choose a color", Color.BLACK);
                 if (newColor != null) {
                     canvas.setDrawingColor(newColor);
                 }
-                break;
+            }
+            ;
         }
     }
 
