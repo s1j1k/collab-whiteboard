@@ -15,43 +15,66 @@ public class WhiteBoardCanvas extends JPanel {
     private BufferedImage canvasImage;
     private Graphics2D g2d;
     private int prevX, prevY;
-    private boolean drawing = false;
     private Tool currentTool;
+
+    // Line tool fields
+    private int startX, startY;
+    private int currentX, currentY;
+    private boolean drawingLine = false;
 
     public WhiteBoardCanvas(int width, int height) {
         setPreferredSize(new Dimension(width, height));
         setBackground(Color.WHITE);
         setDoubleBuffered(true);
         initCanvas();
-        
-        // TODO implement different tools
-
+        // TODO handle other tools
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                drawing = true;
-                prevX = e.getX();
-                prevY = e.getY();
+                if (currentTool == Tool.LINE) {
+                    startX = e.getX();
+                    startY = e.getY();
+                    drawingLine = true;
+                    currentX = startX;
+                    currentY = startY;
+                } else if (currentTool == Tool.FREE_DRAW) {
+                    prevX = e.getX();
+                    prevY = e.getY();
+                }
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                drawing = false;
+                if (currentTool == Tool.LINE && drawingLine) {
+                    // Commit line to the canvas image
+                    g2d.drawLine(startX, startY, e.getX(), e.getY());
+                    drawingLine = false;
+                    repaint();
+                }
             }
         });
 
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                if (currentTool == Tool.FREE_DRAW) {
-                    int x = e.getX();
-                    int y = e.getY();
-                    g2d.drawLine(prevX, prevY, x, y);
-                    repaint();
-                    prevX = x;
-                    prevY = y;
-                    // TODO: Notify network layer of new stroke segment
+                switch (currentTool) {
+                    case FREE_DRAW:
+                        int x = e.getX();
+                        int y = e.getY();
+                        g2d.drawLine(prevX, prevY, x, y);
+                        repaint();
+                        prevX = x;
+                        prevY = y;
+                        break;
+
+                    case LINE:
+                        // Update current mouse position for preview
+                        currentX = e.getX();
+                        currentY = e.getY();
+                        repaint(); // will trigger paintComponent to show preview
+                        break;
                 }
+                // TODO notify network layer of new stroke segment
             }
         });
     }
@@ -62,12 +85,19 @@ public class WhiteBoardCanvas extends JPanel {
         g2d.setColor(Color.BLACK);
         g2d.setStroke(new BasicStroke(2));
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        clear(); // fill with white initially
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.drawImage(canvasImage, 0, 0, null);
+
+        // Draw line preview if currently drawing
+        if (currentTool == Tool.LINE && drawingLine) {
+            g.setColor(Color.GRAY); // preview color
+            g.drawLine(startX, startY, currentX, currentY);
+        }
     }
 
     public void clear() {
@@ -77,18 +107,15 @@ public class WhiteBoardCanvas extends JPanel {
         repaint();
     }
 
-    // Called by server/client logic when updates arrive
     public void drawRemoteLine(int x1, int y1, int x2, int y2) {
         g2d.drawLine(x1, y1, x2, y2);
         repaint();
     }
 
-    // Change drawing colour
     public void setDrawingColor(Color newColor) {
         g2d.setColor(newColor);
     }
 
-    // Change current tool
     public void setCurrentTool(Tool newTool) {
         currentTool = newTool;
     }
