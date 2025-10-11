@@ -213,24 +213,9 @@ public class WhiteBoardCanvas extends JPanel {
 
     public void setCurrentTool(Tool newTool) {
         currentTool = newTool;
-        // TODO change cursor
         if (currentTool == Tool.TEXT) {
             // Change to text input cursor
-
-            Toolkit toolkit = Toolkit.getDefaultToolkit();
-            // Replace "path/to/your/image.png" with the actual path to your cursor image
-            Image image = toolkit.getImage("/icons/text-cursor.png");
-
-            // Define the hotspot (the point within the image that acts as the cursor's
-            // active point)
-            // FIXME where will this be
-            // currentX = e.getX();
-            // currentY = e.getY();
-            Point hotspot = new Point(currentX, currentY);
-
-            Cursor customCursor = toolkit.createCustomCursor(image, hotspot, "Text Cursor");
-            setCursor(customCursor);
-
+            setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
         } else {
             // Change to default cursor
             setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
