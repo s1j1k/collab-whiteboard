@@ -47,11 +47,38 @@ public class WhiteBoardCanvas extends JPanel {
                         currentX = startX;
                         currentY = startY;
                         break;
+                    case CIRCLE:
+                        startX = e.getX();
+                        startY = e.getY();
+                        drawing = true;
+                        currentX = startX;
+                        currentY = startY;
+                        break;
+                    case RECTANGLE:
+                        startX = e.getX();
+                        startY = e.getY();
+                        drawing = true;
+                        currentX = startX;
+                        currentY = startY;
+                        break;
                     case FREE_DRAW:
                         prevX = e.getX();
                         prevY = e.getY();
                         break;
+                    case TEXT:
+                        // Save the location pressed
+                        currentX = e.getX();
+                        currentY = e.getY();
 
+                        // Display an input dialog and get the user's input as a String
+                        String userInput = JOptionPane.showInputDialog("Enter your text here:");
+
+                        // Check if the user entered something or cancelled the dialog
+                        if (userInput != null && !userInput.isEmpty()) {
+                            // Display text input - text, x-coordinate, y-coordinate
+                            g2d.drawString(userInput, currentX, currentY);
+                            repaint();
+                        }
                 }
 
             }
@@ -66,10 +93,17 @@ public class WhiteBoardCanvas extends JPanel {
                 }
                 if (currentTool == Tool.TRIANGLE && drawing) {
                     // Commit triangle to the canvas image
-                    int[] xPoints = { startX, currentX, startX + (startX - currentX) };
-                    int[] yPoints = { startY, currentY, currentY };
-                    int numPoints = 3;
-                    g2d.drawPolygon(xPoints, yPoints, numPoints);
+                    drawTriangle(g2d);
+                    drawing = false;
+                    repaint();
+                }
+                if (currentTool == Tool.CIRCLE && drawing) {
+                    drawOval(g2d);
+                    drawing = false;
+                    repaint();
+                }
+                if (currentTool == Tool.RECTANGLE && drawing) {
+                    drawRect(g2d);
                     drawing = false;
                     repaint();
                 }
@@ -90,6 +124,20 @@ public class WhiteBoardCanvas extends JPanel {
                         break;
 
                     case TRIANGLE:
+                        // Update current mouse position for preview
+                        currentX = e.getX();
+                        currentY = e.getY();
+                        repaint(); // will trigger paintComponent to show preview
+                        break;
+
+                    case CIRCLE:
+                        // Update current mouse position for preview
+                        currentX = e.getX();
+                        currentY = e.getY();
+                        repaint(); // will trigger paintComponent to show preview
+                        break;
+
+                    case RECTANGLE:
                         // Update current mouse position for preview
                         currentX = e.getX();
                         currentY = e.getY();
@@ -131,10 +179,19 @@ public class WhiteBoardCanvas extends JPanel {
         // Draw triangle preview if currently drawing
         if (currentTool == Tool.TRIANGLE && drawing) {
             g.setColor(Color.GRAY); // preview color
-            int[] xPoints = { startX, currentX, startX + (startX - currentX) };
-            int[] yPoints = { startY, currentY, currentY };
-            int numPoints = 3;
-            g.drawPolygon(xPoints, yPoints, numPoints);
+            drawTriangle(g);
+        }
+
+        // Draw circle preview if currently drawing
+        if (currentTool == Tool.CIRCLE && drawing) {
+            g.setColor(Color.GRAY); // preview color
+            drawOval(g);
+        }
+
+        // Draw rectangle preview if currently drawing
+        if (currentTool == Tool.RECTANGLE && drawing) {
+            g.setColor(Color.GRAY); // preview color
+            drawRect(g);
         }
     }
 
@@ -156,6 +213,71 @@ public class WhiteBoardCanvas extends JPanel {
 
     public void setCurrentTool(Tool newTool) {
         currentTool = newTool;
+        // TODO change cursor
+        if (currentTool == Tool.TEXT) {
+            // Change to text input cursor
+
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            // Replace "path/to/your/image.png" with the actual path to your cursor image
+            Image image = toolkit.getImage("/icons/text-cursor.png");
+
+            // Define the hotspot (the point within the image that acts as the cursor's
+            // active point)
+            // FIXME where will this be
+            // currentX = e.getX();
+            // currentY = e.getY();
+            Point hotspot = new Point(currentX, currentY);
+
+            Cursor customCursor = toolkit.createCustomCursor(image, hotspot, "Text Cursor");
+            setCursor(customCursor);
+
+        } else {
+            // Change to default cursor
+            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        }
+    }
+
+    public void drawTriangle(Graphics g) {
+        int[] xPoints = { startX, currentX, startX + (startX - currentX) };
+        int[] yPoints = { startY, currentY, currentY };
+        int numPoints = 3;
+        g.drawPolygon(xPoints, yPoints, numPoints);
+    }
+
+    public void drawOval(Graphics g) {
+        int x, y;
+        int xDia, yDia;
+        xDia = Math.abs(currentX - startX);
+        yDia = Math.abs(currentY - startY);
+        if (startX > currentX) {
+            x = currentX;
+        } else {
+            x = startX;
+        }
+        if (currentY < startY) {
+            y = currentY;
+        } else {
+            y = startY;
+        }
+        g.drawOval(x, y, xDia, yDia);
+    }
+
+    public void drawRect(Graphics g) {
+        int x, y;
+        int xDia, yDia;
+        xDia = Math.abs(currentX - startX);
+        yDia = Math.abs(currentY - startY);
+        if (startX > currentX) {
+            x = currentX;
+        } else {
+            x = startX;
+        }
+        if (currentY < startY) {
+            y = currentY;
+        } else {
+            y = startY;
+        }
+        g.drawRect(x, y, xDia, yDia);
     }
 
 }
