@@ -250,8 +250,22 @@ public class WhiteBoardCanvas extends JPanel {
         this.eraserStrokeSize = size;
     }
 
+    public int getDrawStrokeSize() {
+        return drawStrokeSize;
+    }
+
+    public int getEraserStrokeSize() {
+        return eraserStrokeSize;
+    }
+
     public void setCurrentTool(Tool newTool) {
         currentTool = newTool;
+
+        // TODO update stroke thickness
+
+        // TODO update the stroke thickness toggle when changing tools
+
+
         if (currentTool == Tool.TEXT) {
             // Change to text input cursor
             setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
