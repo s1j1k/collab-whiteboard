@@ -22,6 +22,9 @@ public class WhiteBoardCanvas extends JPanel {
     private int currentX, currentY;
     private boolean drawing = false;
 
+    private int drawStrokeSize = 2;
+    private int eraserStrokeSize = 10;
+
     public WhiteBoardCanvas(int width, int height) {
         setPreferredSize(new Dimension(width, height));
         setBackground(Color.WHITE);
@@ -65,6 +68,10 @@ public class WhiteBoardCanvas extends JPanel {
                         prevX = e.getX();
                         prevY = e.getY();
                         break;
+                    case ERASE:
+                        prevX = e.getX();
+                        prevY = e.getY();
+                        break;
                     case TEXT:
                         // Save the location pressed
                         currentX = e.getX();
@@ -98,11 +105,13 @@ public class WhiteBoardCanvas extends JPanel {
                     repaint();
                 }
                 if (currentTool == Tool.CIRCLE && drawing) {
+                    // Commit oval to the canvas image
                     drawOval(g2d);
                     drawing = false;
                     repaint();
                 }
                 if (currentTool == Tool.RECTANGLE && drawing) {
+                    // Commit rectangle to the canvas image
                     drawRect(g2d);
                     drawing = false;
                     repaint();
@@ -144,6 +153,20 @@ public class WhiteBoardCanvas extends JPanel {
                         repaint(); // will trigger paintComponent to show preview
                         break;
 
+                    case ERASE:
+                        x = e.getX();
+                        y = e.getY();
+                        Color originalColor = g2d.getColor();
+                        // TODO use getBackground() and support themes
+                        g2d.setColor(Color.WHITE);
+                        g2d.setStroke(new BasicStroke(eraserStrokeSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                        g2d.drawLine(prevX, prevY, x, y);
+                        g2d.setColor(originalColor);
+                        repaint();
+                        prevX = x;
+                        prevY = y;
+                        break;
+
                     case LINE:
                         // Update current mouse position for preview
                         currentX = e.getX();
@@ -156,11 +179,17 @@ public class WhiteBoardCanvas extends JPanel {
         });
     }
 
+    public Tool getCurrentTool() {
+        return currentTool;
+    }
+
     private void initCanvas() {
         canvasImage = new BufferedImage(800, 600, BufferedImage.TYPE_INT_ARGB);
         g2d = canvasImage.createGraphics();
         g2d.setColor(Color.BLACK);
-        g2d.setStroke(new BasicStroke(2));
+        // g2d.setStroke(new BasicStroke(2));
+        // Have circle ends
+        g2d.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         clear(); // fill with white initially
     }
@@ -202,6 +231,7 @@ public class WhiteBoardCanvas extends JPanel {
         repaint();
     }
 
+    // FIXME add remote methods
     public void drawRemoteLine(int x1, int y1, int x2, int y2) {
         g2d.drawLine(x1, y1, x2, y2);
         repaint();
@@ -209,6 +239,15 @@ public class WhiteBoardCanvas extends JPanel {
 
     public void setDrawingColor(Color newColor) {
         g2d.setColor(newColor);
+    }
+
+    public void setDrawStrokeSize(int size) {
+        this.drawStrokeSize = size;
+        g2d.setStroke(new BasicStroke(size, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+    }
+
+    public void setEraserStrokeSize(int size) {
+        this.eraserStrokeSize = size;
     }
 
     public void setCurrentTool(Tool newTool) {

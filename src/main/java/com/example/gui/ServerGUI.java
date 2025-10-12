@@ -10,10 +10,10 @@ public class ServerGUI extends AbstractWhiteBoardGUI {
         super("Server Whiteboard");
     }
 
-     @Override
-    protected void broadcastClear() {
-        // TODO send a “clear” message to all clients
-    }
+    //  @Override
+    // protected void broadcastClear() {
+    //     // TODO send a “clear” message to all clients
+    // }
 
 }
 

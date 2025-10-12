@@ -1,4 +1,4 @@
-package com.example.gui;
+package com.example.shared;
 
 import javax.swing.*;
 import java.awt.*;

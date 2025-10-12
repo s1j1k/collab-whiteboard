@@ -6,6 +6,7 @@ public enum Tool {
     CIRCLE("Circle", "/icons/circle.png"),
     RECTANGLE("Rectangle", "/icons/rectangle.png"),
     FREE_DRAW("Free Draw", "/icons/draw.png"),
+    ERASE("Erase", "/icons/erase.png"),
     TEXT("Text", "/icons/text.png"),
     SELECT("Select", "/icons/select.png");
 

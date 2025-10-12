@@ -3,6 +3,8 @@ package com.example.gui;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+
+import com.example.shared.IconUtils;
 import com.example.shared.Tool;
 
 public class ToolBarPanel extends JPanel {
@@ -11,7 +13,7 @@ public class ToolBarPanel extends JPanel {
     private JButton clearButton;
     private JButton colorButton;
 
-    public ToolBarPanel(ActionListener listener) {
+    public ToolBarPanel(ActionListener listener, WhiteBoardCanvas canvas) {
         setLayout(new FlowLayout(FlowLayout.LEFT));
 
         // TODO Shapes: your whiteboard should at least support line, triangle, circle,
@@ -24,15 +26,9 @@ public class ToolBarPanel extends JPanel {
         for (Tool t : Tool.values()) {
             JToggleButton btn = new JToggleButton(IconUtils.loadScaledIcon(t.getIconPath(), 24, 24));
             btn.setToolTipText(t.getDisplayName());
-
-            // Set the enum name as the action command
-            btn.setActionCommand(t.name());
-
-            // Use the passed-in listener
-            btn.addActionListener(listener);
-            // TODO change the current tool based on this
-            // FIXME remove
-            // btn.addActionListener(e -> canvas.setCurrentTool(t));
+            // FIXME remove lambda
+            // Change current tool based on selection
+            btn.addActionListener(e -> canvas.setCurrentTool(t));
             toolBar.add(btn);
             buttonGroup.add(btn);
         }
@@ -42,33 +38,36 @@ public class ToolBarPanel extends JPanel {
 
         add(toolBar);
 
-        // Add action listeners
-        // lineBtn.addActionListener(e -> canvas.setCurrentTool(Tool.LINE));
-        // rectBtn.addActionListener(e -> canvas.setCurrentTool(Tool.RECTANGLE));
-        // ovalBtn.addActionListener(e -> canvas.setCurrentTool(Tool.OVAL));
-        // freeDrawBtn.addActionListener(e -> canvas.setCurrentTool(Tool.FREE_DRAW));
-        // textBtn.addActionListener(e -> canvas.setCurrentTool(Tool.TEXT));
+        // TODO improvement: make this appear only if a drawing tool is selected
+        JSlider strokeSizeSlider = new JSlider(1, 50, 2);
+        JLabel strokeLabel = new JLabel("Stroke Size");
 
-        // TODO add button for free drawing
-        // TODO add icons for buttons
-        // ImageIcon icon = new ImageIcon("path/to/myIcon.png");
-        // JButton shapesButton = new
-        // JButton(IconUtils.loadScaledIcon("/icons/icons8-shapes-64.png", 24, 24));
-        // ImageIcon pencilIcon = new ImageIcon(
-        // getClass().getResource("/icons/pencil.png")
-        // );
+        add(strokeSizeSlider);
+        add(strokeLabel);
 
-        // FIXME add alt text for accessibility
-        // TODO add tooltip text instead of text labels
+        strokeSizeSlider.addChangeListener(e -> {
+            if (canvas.getCurrentTool() == Tool.ERASE) {
+                canvas.setEraserStrokeSize(strokeSizeSlider.getValue());
+            } else {
+                // FIXME this assumes there is only erase or draw tool, not select
+                // TODO check if it's a drawing tool
+                canvas.setDrawStrokeSize(strokeSizeSlider.getValue());
+            }
+        });
 
-        clearButton = new JButton("Clear", IconUtils.loadScaledIcon("/icons/icons8-clear-50.png", 15, 15));
-        colorButton = new JButton("Color", IconUtils.loadScaledIcon("/icons/colors.png", 15, 15));
+        // FIXME action command is a bit clunky
+        // TODO improve architecture
+        colorButton = new JButton(IconUtils.loadScaledIcon("/icons/colors.png", 15, 15));
+        
+        // FIXME clear feature not required
+        // clearButton = new JButton("Clear", IconUtils.loadScaledIcon("/icons/icons8-clear-50.png", 15, 15));
 
-        clearButton.setActionCommand("CLEAR");
         colorButton.setActionCommand("COLOR");
 
-        clearButton.addActionListener(listener);
+        // clearButton.setActionCommand("CLEAR");
+
         colorButton.addActionListener(listener);
+        // clearButton.addActionListener(listener);
 
         // FIXME do this to all
         // shapesButton.setFocusable(false);
@@ -77,7 +76,7 @@ public class ToolBarPanel extends JPanel {
         // shapesButton.setOpaque(false);
 
         // add(shapesButton);
-        add(clearButton);
+        // add(clearButton);
         add(colorButton);
     }
 }

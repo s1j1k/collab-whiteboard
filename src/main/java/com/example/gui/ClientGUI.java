@@ -6,8 +6,8 @@ public class ClientGUI extends AbstractWhiteBoardGUI {
         super("Client Whiteboard");
     }
 
-    @Override
-    protected void broadcastClear() {
-        // TODO send “clear” to server so it updates other clients
-    }
+    // @Override
+    // protected void broadcastClear() {
+    //     // TODO send “clear” to server so it updates other clients
+    // }
 }
