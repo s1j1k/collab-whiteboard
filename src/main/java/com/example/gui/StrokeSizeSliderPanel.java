@@ -1,5 +1,4 @@
 package com.example.gui;
-import com.formdev.flatlaf.FlatLightLaf;
 import javax.swing.*;
 import java.awt.*;
 
@@ -9,6 +8,7 @@ public class StrokeSizeSliderPanel extends JPanel {
 
     public StrokeSizeSliderPanel(int min, int max, int initial) {
         setLayout(new BorderLayout(5, 5));
+        // setLayout(new FlowLayout(FlowLayout.LEFT));
         setOpaque(false);
 
         // Label above slider
@@ -17,32 +17,13 @@ public class StrokeSizeSliderPanel extends JPanel {
 
         // Slider setup
         strokeSizeSlider = new JSlider(JSlider.HORIZONTAL, min, max, initial);
-        strokeSizeSlider.setOpaque(false);
-        strokeSizeSlider.setPaintTicks(false);
-        strokeSizeSlider.setPaintLabels(false);
-
-        // FlatLaf slider styling
-        strokeSizeSlider.putClientProperty("JSlider.trackWidth", 6);
-        strokeSizeSlider.putClientProperty("JSlider.trackColor", Color.GRAY);
-        strokeSizeSlider.putClientProperty("JSlider.thumbColor", Color.BLACK);
-
-        // Initial thumb size
-        updateThumbSize(initial);
-
-        // Dynamically change thumb size when value changes
-        strokeSizeSlider.addChangeListener(e -> {
-            int size = strokeSizeSlider.getValue();
-            updateThumbSize(size);
-        });
-
+        strokeSizeSlider.setToolTipText("Stroke Size");
+        strokeSizeSlider.setForeground(Color.BLACK);
+        // strokeSizeSlider.setBackground(Color.LIGHT_GRAY);
+ 
+        // ---- Layout ----
+        // add(strokeSizeSlider);
         add(strokeSizeSlider, BorderLayout.CENTER);
-    }
-
-    private void updateThumbSize(int size) {
-        // Thumb size grows with stroke size (but not too large)
-        int thumbSize = Math.min(30, Math.max(10, size + 5));
-        strokeSizeSlider.putClientProperty("JSlider.thumbSize", new Dimension(thumbSize, thumbSize));
-        strokeSizeSlider.repaint();
     }
 
     public int getStrokeSize() {
@@ -55,11 +36,6 @@ public class StrokeSizeSliderPanel extends JPanel {
 
     // Example test window
     public static void main(String[] args) {
-        try {
-            FlatLightLaf.setup();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Stroke Size Slider");

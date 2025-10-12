@@ -31,30 +31,37 @@ public class ToolBarPanel extends JPanel {
         strokeLabel.setFont(strokeLabel.getFont().deriveFont(Font.BOLD, 12f));
         strokeLabel.setForeground(Color.BLACK);
 
-        JSlider strokeSizeSlider = new JSlider(1, 50, 2);
-        strokeSizeSlider.setToolTipText("Adjust stroke size");
-        strokeSizeSlider.setOpaque(false);
-        strokeSizeSlider.putClientProperty("JSlider.trackWidth", 6);
-        strokeSizeSlider.putClientProperty("JSlider.trackColor", Color.GRAY);
-        strokeSizeSlider.putClientProperty("JSlider.thumbColor", Color.BLACK);
+        StrokeSizeSliderPanel strokeSizeSliderPanel = new StrokeSizeSliderPanel(1, 50, 5);
+        JSlider strokeSizeSlider = strokeSizeSliderPanel.getSlider();
 
-        // Function to update thumb size dynamically
-        Runnable updateThumbSize = () -> {
-            int size = strokeSizeSlider.getValue();
-            int thumbSize = Math.min(30, Math.max(10, size + 5));
-            strokeSizeSlider.putClientProperty("JSlider.thumbSize", new Dimension(thumbSize, thumbSize));
-            strokeSizeSlider.repaint();
+        // TODO place this on the left
+        // ---- Dynamic Stroke Preview ----
+        JPanel strokePreview = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setColor(Color.BLACK);
+                int s = strokeSizeSlider.getValue();
+                g2.fillOval(getWidth() / 2 - s / 2, getHeight() / 2 - s / 2, s, s);
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(60, 40);
+            }
         };
-        updateThumbSize.run();
 
+
+        // TODO make it change color based on tool
         strokeSizeSlider.addChangeListener(e -> {
-            updateThumbSize.run();
-
             if (canvas.getCurrentTool() == Tool.ERASE) {
                 canvas.setEraserStrokeSize(strokeSizeSlider.getValue());
             } else {
                 canvas.setDrawStrokeSize(strokeSizeSlider.getValue());
             }
+
+            strokePreview.repaint();
         });
 
         // === Create toggle buttons for each tool ===
@@ -69,6 +76,7 @@ public class ToolBarPanel extends JPanel {
             btn.addActionListener(e -> {
                 canvas.setCurrentTool(t);
 
+                // TODO change stroke size preview color
                 if (t == Tool.ERASE) {
                     strokeSizeSlider.setValue(canvas.getEraserStrokeSize());
                 } else {
@@ -93,6 +101,7 @@ public class ToolBarPanel extends JPanel {
         add(toolBar);
         add(strokeLabel);
         add(strokeSizeSlider);
+        add(strokePreview);
         add(colorButton);
 
         // === TODOs (kept from your version) ===
