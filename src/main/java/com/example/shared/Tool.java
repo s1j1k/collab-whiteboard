@@ -7,8 +7,9 @@ public enum Tool {
     RECTANGLE("Rectangle", "/icons/rectangle.png"),
     FREE_DRAW("Free Draw", "/icons/draw.png"),
     ERASE("Erase", "/icons/erase.png"),
-    TEXT("Text", "/icons/text.png"),
-    SELECT("Select", "/icons/select.png");
+    TEXT("Text", "/icons/text.png");
+    // TODO improvement: implement select
+    // SELECT("Select", "/icons/select.png");
 
     private final String displayName;
     private final String iconPath;

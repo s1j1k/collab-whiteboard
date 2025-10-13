@@ -1,15 +1,10 @@
 package com.example.gui;
 
 import javax.swing.*;
-
-import com.example.shared.Tool;
 import com.formdev.flatlaf.FlatLightLaf;
-
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
-public abstract class AbstractWhiteBoardGUI extends JFrame implements ActionListener {
+public abstract class AbstractWhiteBoardGUI extends JFrame {
 
     protected WhiteBoardCanvas canvas;
     protected ToolBarPanel toolbar;
@@ -33,7 +28,7 @@ public abstract class AbstractWhiteBoardGUI extends JFrame implements ActionList
         // TODO interface for sending the objects
         // TODO allow select by object
         canvas = new WhiteBoardCanvas(800, 600);
-        toolbar = new ToolBarPanel(this, canvas);
+        toolbar = new ToolBarPanel(canvas);
 
         add(toolbar, BorderLayout.NORTH);
         add(canvas, BorderLayout.CENTER);
@@ -42,30 +37,30 @@ public abstract class AbstractWhiteBoardGUI extends JFrame implements ActionList
         setLocationRelativeTo(null);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        String cmd = e.getActionCommand();
-        // TODO implement shapes
-        try {
-            // Try to parse Tool enum
-            Tool selectedTool = Tool.valueOf(cmd);
-            canvas.setCurrentTool(selectedTool);
-        } catch (IllegalArgumentException ex) {
+    // @Override
+    // public void actionPerformed(ActionEvent e) {
+    //     String cmd = e.getActionCommand();
+    //     // TODO implement shapes
+    //     try {
+    //         // Try to parse Tool enum
+    //         Tool selectedTool = Tool.valueOf(cmd);
+    //         canvas.setCurrentTool(selectedTool);
+    //     } catch (IllegalArgumentException ex) {
             // Not a tool, handle other commands
             // FIXME clear is not required
             // if ("CLEAR".equals(cmd)) {
             //     canvas.clear();
             //     broadcastClear(); // implemented differently by client/server
             // } else 
-            if ("COLOR".equals(cmd)) {
-                Color newColor = JColorChooser.showDialog(this, "Choose a color", Color.BLACK);
-                if (newColor != null) {
-                    canvas.setDrawingColor(newColor);
-                }
-            }
-            ;
-        }
-    }
+            // if ("COLOR".equals(cmd)) {
+            //     Color newColor = JColorChooser.showDialog(this, "Choose a color", Color.BLACK);
+            //     if (newColor != null) {
+            //         canvas.setDrawingColor(newColor);
+            //     }
+            // }
+    //         // ;
+    //     }
+    // }
 
     // TODO include methods to be overridden here
 

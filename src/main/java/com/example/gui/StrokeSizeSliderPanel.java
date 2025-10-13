@@ -13,7 +13,9 @@ public class StrokeSizeSliderPanel extends JPanel {
 
         // Label above slider
         strokeLabel = new JLabel("Stroke Size", SwingConstants.CENTER);
-        add(strokeLabel, BorderLayout.NORTH);
+        strokeLabel.setFont(strokeLabel.getFont().deriveFont(Font.BOLD, 12f));
+        strokeLabel.setForeground(Color.BLACK);
+        
 
         // Slider setup
         strokeSizeSlider = new JSlider(JSlider.HORIZONTAL, min, max, initial);
@@ -22,7 +24,7 @@ public class StrokeSizeSliderPanel extends JPanel {
         // strokeSizeSlider.setBackground(Color.LIGHT_GRAY);
  
         // ---- Layout ----
-        // add(strokeSizeSlider);
+        add(strokeLabel, BorderLayout.NORTH);
         add(strokeSizeSlider, BorderLayout.CENTER);
     }
 
