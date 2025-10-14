@@ -1,8 +1,12 @@
 package com.example.server;
 
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+
 import javax.swing.SwingUtilities;
 
 import com.example.gui.ServerGUI;
+import com.example.shared.RemoteMessageService;
 
 // FIXME logger not installed correctly
 
@@ -40,7 +44,11 @@ public class CreateWhiteBoard {
             // Start the RMI whiteboard server
             // FIXME do this on a separate thread
             WhiteBoardServer server = new WhiteBoardServer();
-            server.start();
+            // FIXME need host name?
+            // TODO add drawing interface etc. etc.
+            server.start(port);
+
+            
 
             // Launch Server GUI safely on the Event Dispatch Thread
             SwingUtilities.invokeLater(() -> new ServerGUI().setVisible(true));
