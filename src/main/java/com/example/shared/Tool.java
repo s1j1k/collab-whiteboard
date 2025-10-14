@@ -21,4 +21,9 @@ public enum Tool {
 
     public String getDisplayName() { return displayName; }
     public String getIconPath() { return iconPath; }
+    // Handled differently to free draw, erase, and text
+    // Drawn on mouse release
+    public boolean isShapeTool() {
+        return this == LINE || this == TRIANGLE || this == CIRCLE || this == RECTANGLE;
+    }
 }
