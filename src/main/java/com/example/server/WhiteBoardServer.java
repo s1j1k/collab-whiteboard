@@ -5,18 +5,28 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.example.shared.RemoteMessageService;
+import javax.swing.SwingUtilities;
 
-public class WhiteBoardServer extends UnicastRemoteObject implements RemoteMessageService {
+import com.example.gui.ServerGUI;
+import com.example.shared.DrawAction;
+import com.example.shared.WhiteBoardClientInterface;
+import com.example.shared.WhiteboardServerInterface;
 
-    // private String host;
-    // private int port;
+public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardServerInterface {
+    ServerGUI gui = new ServerGUI();
+    private final List<WhiteBoardClientInterface> clients = new ArrayList<>();
 
     protected WhiteBoardServer() throws RemoteException {
-        // this.host = host;
-        // this.port = port;
         super();
+    }
+
+    @Override
+    public synchronized void registerClient(WhiteBoardClientInterface client) throws RemoteException {
+        clients.add(client);
+        System.out.println("Client registered: " + client);
     }
 
     @Override
@@ -25,16 +35,38 @@ public class WhiteBoardServer extends UnicastRemoteObject implements RemoteMessa
         // Additional server-side logic here, e.g., logging or storing the message
     }
 
+    /** 
+     * Client sends this drawing to the server
+     */
+    @Override
+    public void receiveDrawAction(DrawAction action) throws RemoteException {
+        SwingUtilities.invokeLater(() -> gui.getCanvas().applyDrawAction(action));
+    }
+
+    // @Override
+    // public synchronized void sendDrawAction(DrawAction action) throws RemoteException {
+    //     for (WhiteBoardClientInterface client : clients) {
+    //         try {
+    //             client.receiveDrawAction(action);
+    //         } catch (RemoteException e) {
+    //             System.err.println("Failed to send action to a client: " + e.getMessage());
+    //         }
+    //     }
+    // }
+
     public void start(int port) {
         try {
-                // Create and bind the remote object in the RMI registry
-                // RemoteMessageService server = new WhiteBoardServer();
-                Registry registry = LocateRegistry.createRegistry(port);
-                registry.rebind("MessageService", this);
-                System.out.println("Message Server is ready.");
-            } catch (Exception e) {
-                System.err.println("Server exception: " + e.toString());
-                e.printStackTrace();
-            }
+            // Create and bind the remote object in the RMI registry
+            // RemoteMessageService server = new WhiteBoardServer();
+            Registry registry = LocateRegistry.createRegistry(port);
+            registry.rebind("MessageService", this);
+            System.out.println("Message Server is ready.");
+
+            // Launch Server GUI safely on the Event Dispatch Thread
+            SwingUtilities.invokeLater(() -> gui.setVisible(true));
+        } catch (Exception e) {
+            System.err.println("Server exception: " + e.toString());
+            e.printStackTrace();
+        }
     }
 }

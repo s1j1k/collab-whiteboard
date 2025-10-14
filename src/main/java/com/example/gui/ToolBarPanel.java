@@ -75,10 +75,11 @@ public class ToolBarPanel extends JPanel {
         });
 
         // === Create toggle buttons for each tool ===
+        // FIXME toggle buttons not holding down
         for (Tool t : Tool.values()) {
             JToggleButton btn = new JToggleButton(IconUtils.loadScaledIcon(t.getIconPath(), 24, 24));
             btn.setToolTipText(t.getDisplayName());
-            btn.setFocusable(false);
+            // btn.setFocusable(false);
             btn.setContentAreaFilled(false);
             btn.setBorderPainted(false);
             btn.setOpaque(false);
@@ -106,7 +107,7 @@ public class ToolBarPanel extends JPanel {
         colorButton = new JButton(IconUtils.loadScaledIcon("/icons/colors.png", 24, 24));
         // colorButton.setActionCommand("COLOR");
         // colorButton.addActionListener(listener);
-        colorButton.setFocusable(false);
+        // colorButton.setFocusable(false);
         colorButton.setContentAreaFilled(false);
         colorButton.setBorderPainted(false);
         colorButton.setOpaque(false);

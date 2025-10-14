@@ -2,6 +2,7 @@ package com.example.gui;
 
 import javax.swing.*;
 
+import com.example.shared.DrawAction;
 import com.example.shared.Tool;
 
 import java.awt.*;
@@ -9,8 +10,11 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class WhiteBoardCanvas extends JPanel {
+
+    private Consumer<DrawAction> drawListener;
 
     private BufferedImage canvasImage;
     private Graphics2D g2d;
@@ -97,6 +101,15 @@ public class WhiteBoardCanvas extends JPanel {
                     g2d.drawLine(startX, startY, e.getX(), e.getY());
                     drawing = false;
                     repaint();
+
+                    // FIXME do other tools
+                    DrawAction action = new DrawAction(startX, startY, e.getX(), e.getY(), g2d.getColor(),
+                            drawStrokeSize);
+                    if (drawListener != null)
+                        drawListener.accept(action);
+
+                    // TODO use same interface
+                    // applyDrawAction(action);
                 }
                 if (currentTool == Tool.TRIANGLE && drawing) {
                     // Commit triangle to the canvas image
@@ -237,6 +250,10 @@ public class WhiteBoardCanvas extends JPanel {
         repaint();
     }
 
+    public void setDrawListener(Consumer<DrawAction> listener) {
+        this.drawListener = listener;
+    }
+
     public void setDrawingColor(Color newColor) {
         g2d.setColor(newColor);
     }
@@ -264,7 +281,6 @@ public class WhiteBoardCanvas extends JPanel {
         // TODO update stroke thickness
 
         // TODO update the stroke thickness toggle when changing tools
-
 
         if (currentTool == Tool.TEXT) {
             // Change to text input cursor
@@ -316,6 +332,13 @@ public class WhiteBoardCanvas extends JPanel {
             y = startY;
         }
         g.drawRect(x, y, xDia, yDia);
+    }
+
+    // TODO implement this for other tools
+    public void applyDrawAction(DrawAction action) {
+        // draw the line using Graphics2D
+        g2d.drawLine(action.getX1(), action.getY1(), action.getX2(), action.getY2());
+        repaint();
     }
 
 }

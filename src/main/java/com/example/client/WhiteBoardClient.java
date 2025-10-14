@@ -1,28 +1,60 @@
 package com.example.client;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Scanner;
 
-import com.example.shared.RemoteMessageService;
+import javax.swing.SwingUtilities;
 
-public class WhiteBoardClient {
+import com.example.gui.ClientGUI;
+import com.example.shared.DrawAction;
+import com.example.shared.WhiteBoardClientInterface;
+import com.example.shared.WhiteboardServerInterface;
+
+public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardClientInterface {
 
     private String host;
     private int port;
     private String username;
+    // FIXME is it ok to launch GUI here?
+    private ClientGUI gui = new ClientGUI();
 
-    public WhiteBoardClient(String host, int port, String username) {
+    public WhiteBoardClient(String host, int port, String username) throws RemoteException {
         this.host = host;
         this.port = port;
         this.username = username;
     }
 
+    // FIXME not implemented
+    @Override
+    public void receiveDrawAction(DrawAction action) throws RemoteException {
+        SwingUtilities.invokeLater(() -> gui.getCanvas().applyDrawAction(action));
+    }
+
     public void start() {
 
         try {
+            // Launch the GUI
+            // FIXME do this last 
+            SwingUtilities.invokeLater(() ->  gui.setVisible(true));
+
             // Get the RMI registry and the remote object
             Registry registry = LocateRegistry.getRegistry(host, port);
-            RemoteMessageService server = (RemoteMessageService) registry.lookup("MessageService");
+            WhiteboardServerInterface server = (WhiteboardServerInterface) registry.lookup("MessageService");
+
+             // Whenever client draws locally, send it to the server
+            gui.getCanvas().setDrawListener(action -> {
+                try {
+                    server.receiveDrawAction(action);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            // show the client GUI containing this canvas
+            System.out.println("✅ Connected to server");
+
 
             Scanner scanner = new Scanner(System.in);
             // System.out.print("Enter your username: ");

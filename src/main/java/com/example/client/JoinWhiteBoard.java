@@ -1,5 +1,7 @@
 package com.example.client;
 
+import java.rmi.RemoteException;
+
 public class JoinWhiteBoard {
 
     public static void main(String[] args) { 
@@ -22,8 +24,15 @@ public class JoinWhiteBoard {
         // TODO launch client GUI as well
         // FIXME allow change of username?
 
-        WhiteBoardClient client = new WhiteBoardClient(serverAddress, port, username);
-        client.start();
+        WhiteBoardClient client;
+        try {
+            client = new WhiteBoardClient(serverAddress, port, username);
+            client.start();
+        } catch (RemoteException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
 
     } 
     

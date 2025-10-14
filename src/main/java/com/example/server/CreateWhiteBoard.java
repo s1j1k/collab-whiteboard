@@ -1,13 +1,5 @@
 package com.example.server;
 
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-
-import javax.swing.SwingUtilities;
-
-import com.example.gui.ServerGUI;
-import com.example.shared.RemoteMessageService;
-
 // FIXME logger not installed correctly
 
 // import org.apache.logging.log4j.Logger;
@@ -50,8 +42,9 @@ public class CreateWhiteBoard {
 
             
 
+            // FIXME move this to server start function itself?
             // Launch Server GUI safely on the Event Dispatch Thread
-            SwingUtilities.invokeLater(() -> new ServerGUI().setVisible(true));
+            // SwingUtilities.invokeLater(() -> new ServerGUI().setVisible(true));
 
             System.out.println("Whiteboard server started successfully.");
         } catch (Exception e) {
