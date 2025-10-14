@@ -8,8 +8,12 @@ public class DrawAction implements Serializable {
     private final int x1, y1, x2, y2;
     private final Color color;
     private final int strokeSize;
+    private final Tool tool;
+    
 
-    public DrawAction(int x1, int y1, int x2, int y2, Color color, int strokeSize) {
+
+    public DrawAction(Tool tool, int x1, int y1, int x2, int y2, Color color, int strokeSize) {
+        this.tool = tool;
         this.x1 = x1;
         this.y1 = y1;
         this.x2 = x2;
@@ -18,6 +22,7 @@ public class DrawAction implements Serializable {
         this.strokeSize = strokeSize;
     }
 
+    public Tool getTool() { return tool; }
     public int getX1() { return x1; }
     public int getY1() { return y1; }
     public int getX2() { return x2; }

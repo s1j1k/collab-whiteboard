@@ -8,8 +8,6 @@ import com.example.shared.Tool;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
 public class WhiteBoardCanvas extends JPanel {
@@ -34,83 +32,47 @@ public class WhiteBoardCanvas extends JPanel {
         setBackground(Color.WHITE);
         setDoubleBuffered(true);
         initCanvas();
-        // TODO handle other tools
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                switch (currentTool) {
-                    case LINE:
-                        startX = e.getX();
-                        startY = e.getY();
-                        drawing = true;
-                        currentX = startX;
-                        currentY = startY;
-                        break;
-                    // TODO implement triangle and allow to drag its size / resize
-                    case TRIANGLE:
-                        startX = e.getX();
-                        startY = e.getY();
-                        drawing = true;
-                        currentX = startX;
-                        currentY = startY;
-                        break;
-                    case CIRCLE:
-                        startX = e.getX();
-                        startY = e.getY();
-                        drawing = true;
-                        currentX = startX;
-                        currentY = startY;
-                        break;
-                    case RECTANGLE:
-                        startX = e.getX();
-                        startY = e.getY();
-                        drawing = true;
-                        currentX = startX;
-                        currentY = startY;
-                        break;
-                    case FREE_DRAW:
-                        prevX = e.getX();
-                        prevY = e.getY();
-                        break;
-                    case ERASE:
-                        prevX = e.getX();
-                        prevY = e.getY();
-                        break;
-                    case TEXT:
-                        // Save the location pressed
-                        currentX = e.getX();
-                        currentY = e.getY();
+                // Save the location pressed
+                startX = e.getX();
+                startY = e.getY();
+                drawing = true;
+                currentX = startX;
+                currentY = startY;
+                prevX = e.getX();
+                prevY = e.getY();
 
-                        // Display an input dialog and get the user's input as a String
-                        String userInput = JOptionPane.showInputDialog("Enter your text here:");
+                if (currentTool == Tool.TEXT) {
+                    // Display an input dialog and get the user's input as a String
+                    String userInput = JOptionPane.showInputDialog("Enter your text here:");
 
-                        // Check if the user entered something or cancelled the dialog
-                        if (userInput != null && !userInput.isEmpty()) {
-                            // Display text input - text, x-coordinate, y-coordinate
-                            g2d.drawString(userInput, currentX, currentY);
-                            repaint();
-                        }
+                    // Check if the user entered something or cancelled the dialog
+                    if (userInput != null && !userInput.isEmpty()) {
+                        // Display text input - text, x-coordinate, y-coordinate
+                        g2d.drawString(userInput, currentX, currentY);
+                        repaint();
+                    }
                 }
-
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
+                // TODO convert to draw action syntax
                 if (currentTool == Tool.LINE && drawing) {
                     // Commit line to the canvas image
-                    g2d.drawLine(startX, startY, e.getX(), e.getY());
-                    drawing = false;
-                    repaint();
-
                     // FIXME do other tools
-                    DrawAction action = new DrawAction(startX, startY, e.getX(), e.getY(), g2d.getColor(),
+                    DrawAction action = new DrawAction(currentTool, startX, startY, e.getX(), e.getY(), g2d.getColor(),
                             drawStrokeSize);
                     if (drawListener != null)
                         drawListener.accept(action);
-
                     // TODO use same interface
-                    // applyDrawAction(action);
+                    applyDrawAction(action);
+                    drawing = false;
+                    repaint();
                 }
+                // FIXME handle within drraw action & don't check which tool here
                 if (currentTool == Tool.TRIANGLE && drawing) {
                     // Commit triangle to the canvas image
                     drawTriangle(g2d);
@@ -145,21 +107,7 @@ public class WhiteBoardCanvas extends JPanel {
                         prevY = y;
                         break;
 
-                    case TRIANGLE:
-                        // Update current mouse position for preview
-                        currentX = e.getX();
-                        currentY = e.getY();
-                        repaint(); // will trigger paintComponent to show preview
-                        break;
-
-                    case CIRCLE:
-                        // Update current mouse position for preview
-                        currentX = e.getX();
-                        currentY = e.getY();
-                        repaint(); // will trigger paintComponent to show preview
-                        break;
-
-                    case RECTANGLE:
+                    case TRIANGLE, CIRCLE, RECTANGLE, LINE:
                         // Update current mouse position for preview
                         currentX = e.getX();
                         currentY = e.getY();
@@ -179,15 +127,8 @@ public class WhiteBoardCanvas extends JPanel {
                         prevX = x;
                         prevY = y;
                         break;
-
-                    case LINE:
-                        // Update current mouse position for preview
-                        currentX = e.getX();
-                        currentY = e.getY();
-                        repaint(); // will trigger paintComponent to show preview
-                        break;
                 }
-                // TODO notify network layer of new stroke segment
+                // TODO notify network layer of new stroke segment for free draw & erase
             }
         });
     }
@@ -209,8 +150,11 @@ public class WhiteBoardCanvas extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
+        // Boilerplate code
         super.paintComponent(g);
         g.drawImage(canvasImage, 0, 0, null);
+
+        // === Preview for drawing tools ===
 
         // Draw line preview if currently drawing
         if (currentTool == Tool.LINE && drawing) {
@@ -237,6 +181,7 @@ public class WhiteBoardCanvas extends JPanel {
         }
     }
 
+    // FIXME this isn't used / implemented
     public void clear() {
         g2d.setColor(Color.WHITE);
         g2d.fillRect(0, 0, getWidth(), getHeight());
@@ -245,10 +190,10 @@ public class WhiteBoardCanvas extends JPanel {
     }
 
     // FIXME add remote methods
-    public void drawRemoteLine(int x1, int y1, int x2, int y2) {
-        g2d.drawLine(x1, y1, x2, y2);
-        repaint();
-    }
+    // public void drawRemoteLine(int x1, int y1, int x2, int y2) {
+    // g2d.drawLine(x1, y1, x2, y2);
+    // repaint();
+    // }
 
     public void setDrawListener(Consumer<DrawAction> listener) {
         this.drawListener = listener;
@@ -335,10 +280,25 @@ public class WhiteBoardCanvas extends JPanel {
     }
 
     // TODO implement this for other tools
+    // FIXME thread safety for server
     public void applyDrawAction(DrawAction action) {
-        // draw the line using Graphics2D
-        g2d.drawLine(action.getX1(), action.getY1(), action.getX2(), action.getY2());
-        repaint();
+
+        // draw using Graphics2D
+        Stroke originalStroke = g2d.getStroke();
+        Color originalColor = g2d.getColor();
+        g2d.setColor(action.getColor());
+        g2d.setStroke(new BasicStroke(action.getStrokeSize(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+        switch (action.getTool()) {
+            case LINE:
+                g2d.drawLine(action.getX1(), action.getY1(), action.getX2(), action.getY2());
+                repaint();
+                break;
+        }
+
+        g2d.setColor(originalColor);
+        g2d.setStroke(originalStroke);
+
     }
 
 }
