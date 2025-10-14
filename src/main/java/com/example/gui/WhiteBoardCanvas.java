@@ -112,7 +112,7 @@ public class WhiteBoardCanvas extends JPanel {
                         // g2d.drawLine(prevX, prevY, x, y);
                   
 
-                         DrawAction action = new DrawAction(currentTool, prevX, prevY, x, y, Color.WHITE,
+                        action = new DrawAction(currentTool, prevX, prevY, x, y, Color.WHITE,
                             eraserStrokeSize);
                         if (drawListener != null)
                             drawListener.accept(action);
@@ -158,19 +158,19 @@ public class WhiteBoardCanvas extends JPanel {
         // Draw triangle preview if currently drawing
         if (currentTool == Tool.TRIANGLE && drawing) {
             g.setColor(Color.GRAY); // preview color
-            drawTriangle(g);
+            drawTriangle(g, startX, startY, currentX, currentY);
         }
 
         // Draw circle preview if currently drawing
         if (currentTool == Tool.CIRCLE && drawing) {
             g.setColor(Color.GRAY); // preview color
-            drawOval(g);
+            drawOval(g, startX, startY, currentX, currentY);
         }
 
         // Draw rectangle preview if currently drawing
         if (currentTool == Tool.RECTANGLE && drawing) {
             g.setColor(Color.GRAY); // preview color
-            drawRect(g);
+            drawRect(g, startX, startY, currentX, currentY);
         }
     }
 
@@ -227,7 +227,7 @@ public class WhiteBoardCanvas extends JPanel {
 
     public void drawTriangle(Graphics g, int x1, int y1, int x2, int y2) {
         int[] xPoints = { x1, x2, x1 + (x1 - x2) };
-        int[] yPoints = { x1, x2, x2 };
+        int[] yPoints = { y1, y2, y2 };
         int numPoints = 3;
         g.drawPolygon(xPoints, yPoints, numPoints);
     }
@@ -307,7 +307,7 @@ public class WhiteBoardCanvas extends JPanel {
 
             case TEXT:
                 // Display text input - text, x-coordinate, y-coordinate
-                g2d.drawString(action.getText(), action.getX1(), action.getX2());
+                g2d.drawString(action.getText(), action.getX1(), action.getY1());
         }
 
         // Reset to original color and stroke
