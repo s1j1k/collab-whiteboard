@@ -35,12 +35,12 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
         // Additional server-side logic here, e.g., logging or storing the message
     }
 
-    /** 
+    /**
      * Client sends this drawing to the server
      */
     // @Override
     // public void receiveDrawAction(DrawAction action) throws RemoteException {
-    //     SwingUtilities.invokeLater(() -> gui.getCanvas().applyDrawAction(action));
+    // SwingUtilities.invokeLater(() -> gui.getCanvas().applyDrawAction(action));
     // }
 
     // FIXME make it thread safe
@@ -71,7 +71,6 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
 
             // Launch Server GUI safely on the Event Dispatch Thread
             SwingUtilities.invokeLater(() -> gui.setVisible(true));
-
 
             // Whenever server draws locally, send it to all of the clients
             gui.getCanvas().setDrawListener(action -> {

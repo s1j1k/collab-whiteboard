@@ -30,6 +30,7 @@ public class ToolBarPanel extends JPanel {
         // === Toolbar for tool buttons ===
         ButtonGroup buttonGroup = new ButtonGroup();
         JToolBar toolBar = new JToolBar();
+        // FIXME make it floatable?
         toolBar.setFloatable(false);
 
         // === Right section: stroke size + color ===
@@ -80,9 +81,9 @@ public class ToolBarPanel extends JPanel {
             JToggleButton btn = new JToggleButton(IconUtils.loadScaledIcon(t.getIconPath(), 24, 24));
             btn.setToolTipText(t.getDisplayName());
             // btn.setFocusable(false);
-            btn.setContentAreaFilled(false);
-            btn.setBorderPainted(false);
-            btn.setOpaque(false);
+            // btn.setContentAreaFilled(false);
+            // btn.setBorderPainted(false);
+            // btn.setOpaque(false);
 
             btn.addActionListener(e -> {
                 canvas.setCurrentTool(t);
@@ -108,9 +109,9 @@ public class ToolBarPanel extends JPanel {
         // colorButton.setActionCommand("COLOR");
         // colorButton.addActionListener(listener);
         // colorButton.setFocusable(false);
-        colorButton.setContentAreaFilled(false);
-        colorButton.setBorderPainted(false);
-        colorButton.setOpaque(false);
+        // colorButton.setContentAreaFilled(false);
+        // colorButton.setBorderPainted(false);
+        // colorButton.setOpaque(false);
         colorButton.addActionListener(e -> {
             Color chosen = JColorChooser.showDialog(this, "Choose Drawing Color", currentColor);
             if (chosen != null) {
