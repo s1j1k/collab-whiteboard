@@ -61,21 +61,32 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
             System.out.println("✅ Connected to server");
 
 
-            Scanner scanner = new Scanner(System.in);
+            // Scanner scanner = new Scanner(System.in);
             // System.out.print("Enter your username: ");
             // String username = scanner.nextLine();
 
             // FIXME implement this in the client GUI chat window instead
-            System.out.println("You can now send messages to the server. Type 'exit' to quit.");
-            while (true) {
-                System.out.print("Enter message: ");
-                String message = scanner.nextLine();
-                if ("exit".equalsIgnoreCase(message)) {
-                    break;
+            // System.out.println("You can now send messages to the server. Type 'exit' to quit.");
+            gui.getChatPanel().setChatListener(message -> {
+                // send message to server via RMI 
+                System.out.println("Sending: " + message);
+                try {
+                    server.sendMessage(username, message);
+                } catch (RemoteException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
-                server.sendMessage(username, message);
-            }
-            scanner.close();
+            });
+            
+            // while (true) {
+            //     System.out.print("Enter message: ");
+            //     String message = scanner.nextLine();
+            //     if ("exit".equalsIgnoreCase(message)) {
+            //         break;
+            //     }
+            //     server.sendMessage(username, message);
+            // }
+            // scanner.close();
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
             e.printStackTrace();

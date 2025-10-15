@@ -63,6 +63,7 @@ public class ToolBarPanel extends JPanel {
                 return new Dimension(60, 40);
             }
         };
+        strokePreview.setOpaque(false);
 
         // TODO make it change color based on tool
         strokeSizeSlider.addChangeListener(e -> {
@@ -97,7 +98,6 @@ public class ToolBarPanel extends JPanel {
 
                 strokePreview.repaint(); // refresh preview
 
-
             });
 
             buttonGroup.add(btn);
@@ -106,12 +106,22 @@ public class ToolBarPanel extends JPanel {
 
         // === Color Button ===
         colorButton = new JButton(IconUtils.loadScaledIcon("/icons/colors.png", 24, 24));
-        // colorButton.setActionCommand("COLOR");
-        // colorButton.addActionListener(listener);
-        // colorButton.setFocusable(false);
-        // colorButton.setContentAreaFilled(false);
-        // colorButton.setBorderPainted(false);
-        // colorButton.setOpaque(false);
+        colorButton.setFocusable(false);
+        colorButton.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4)); // keep spacing
+        colorButton.setContentAreaFilled(false); // remove default background fill
+        colorButton.setOpaque(false); // allow look-and-feel to show hover state
+        colorButton.setRolloverEnabled(true); // ensure hover effect works
+        colorButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                colorButton.setContentAreaFilled(true); // show highlight
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                colorButton.setContentAreaFilled(false); // revert highlight
+            }
+        });
         colorButton.addActionListener(e -> {
             Color chosen = JColorChooser.showDialog(this, "Choose Drawing Color", currentColor);
             if (chosen != null) {
@@ -123,7 +133,6 @@ public class ToolBarPanel extends JPanel {
 
         // === Add to layout ===
         leftPanel.add(toolBar);
-
         rightPanel.add(strokeSizeSliderPanel);
         rightPanel.add(strokePreview);
         rightPanel.add(colorButton);

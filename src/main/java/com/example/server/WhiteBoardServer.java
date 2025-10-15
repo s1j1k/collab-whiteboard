@@ -33,6 +33,10 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
     public void sendMessage(String username, String message) throws RemoteException {
         System.out.println("Message received from " + username + ": " + message);
         // Additional server-side logic here, e.g., logging or storing the message
+        // TODO update chat window in server and all the clients
+        // FIXME add some formatting / color
+        gui.getChatPanel().appendMessage(username + ": " + message);
+        // Send to all clients
     }
 
     /**
