@@ -1,4 +1,5 @@
 package com.example.client;
+
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -22,9 +23,11 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     private ClientGUI gui = new ClientGUI();
 
     public WhiteBoardClient(String host, int port, String username) throws RemoteException {
+        super();
         this.host = host;
         this.port = port;
         this.username = username;
+
     }
 
     @Override
@@ -41,8 +44,8 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
 
         try {
             // Launch the GUI
-            // FIXME do this last 
-            SwingUtilities.invokeLater(() ->  gui.setVisible(true));
+            // FIXME do this last
+            SwingUtilities.invokeLater(() -> gui.setVisible(true));
 
             // Get the RMI registry and the remote object
             Registry registry = LocateRegistry.getRegistry(host, port);
@@ -53,7 +56,7 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
 
             // TODO init canvas with what's on server already
 
-             // Whenever client draws locally, send it to the server
+            // Whenever client draws locally, send it to the server
             gui.getCanvas().setDrawListener(action -> {
                 try {
                     server.broadcastDrawAction(action);
@@ -65,15 +68,15 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
             // show the client GUI containing this canvas
             System.out.println("✅ Connected to server");
 
-
             // Scanner scanner = new Scanner(System.in);
             // System.out.print("Enter your username: ");
             // String username = scanner.nextLine();
 
             // FIXME implement this in the client GUI chat window instead
-            // System.out.println("You can now send messages to the server. Type 'exit' to quit.");
+            // System.out.println("You can now send messages to the server. Type 'exit' to
+            // quit.");
             gui.getChatPanel().setChatListener(message -> {
-                // send message to server via RMI 
+                // send message to server via RMI
                 System.out.println("Sending: " + message);
                 try {
                     server.sendChatMessage(new ChatMessage(username, message));
@@ -82,21 +85,14 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
                     e.printStackTrace();
                 }
             });
-            
-            // while (true) {
-            //     System.out.print("Enter message: ");
-            //     String message = scanner.nextLine();
-            //     if ("exit".equalsIgnoreCase(message)) {
-            //         break;
-            //     }
-            //     server.sendMessage(username, message);
-            // }
-            // scanner.close();
+
+            gui.getCanvas().setUsername(username);
+
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
             e.printStackTrace();
         }
 
     }
- 
+
 }

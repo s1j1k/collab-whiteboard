@@ -18,13 +18,13 @@ public class CreateWhiteBoard {
     public static void main(String[] args) {
         // Parse command line arguments
         // Expected: java CreateWhiteBoard <serverIPAddress> <serverPort> username
-        String serverAddress;
+        String host;
         int port;
         String username;
 
         // FIXME detailed error handling
         try {
-            serverAddress = new String(args[0]);
+            host = new String(args[0]);
             port = Integer.parseInt(args[1]);
             username = new String(args[2]);
         } catch (Throwable e) {
@@ -35,10 +35,10 @@ public class CreateWhiteBoard {
         try {
             // Start the RMI whiteboard server
             // FIXME do this on a separate thread
-            WhiteBoardServer server = new WhiteBoardServer();
+            WhiteBoardServer server = new WhiteBoardServer(host, port, username);
             // FIXME need host name?
             // TODO add drawing interface etc. etc.
-            server.start(port);
+            server.start();
 
             
 

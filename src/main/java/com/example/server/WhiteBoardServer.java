@@ -19,9 +19,16 @@ import com.example.shared.WhiteboardServerInterface;
 public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardServerInterface {
     ServerGUI gui = new ServerGUI();
     private final List<WhiteBoardClientInterface> clients = new ArrayList<>();
+    // FIXME so I can use the host
+    private String host;
+    private int port;
+    private String username;
 
-    protected WhiteBoardServer() throws RemoteException {
+    protected WhiteBoardServer(String host, int port, String username) throws RemoteException {
         super();
+        this.host = host;
+        this.port = port;
+        this.username = username;
     }
 
     @Override
@@ -51,14 +58,6 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
         }
     }
 
-    /**
-     * Client sends this drawing to the server
-     */
-    // @Override
-    // public void receiveDrawAction(DrawAction action) throws RemoteException {
-    // SwingUtilities.invokeLater(() -> gui.getCanvas().applyDrawAction(action));
-    // }
-
     // FIXME make it thread safe
     @Override
     public synchronized void broadcastDrawAction(DrawAction action) throws RemoteException {
@@ -77,7 +76,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
         }
     }
 
-    public void start(int port) {
+    public void start() {
         try {
             // Create and bind the remote object in the RMI registry
             // RemoteMessageService server = new WhiteBoardServer();
@@ -96,6 +95,8 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
                     e.printStackTrace();
                 }
             });
+
+            gui.getCanvas().setUsername(username);
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();

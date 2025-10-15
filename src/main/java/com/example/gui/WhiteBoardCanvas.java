@@ -1,5 +1,6 @@
 package com.example.gui;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
 import com.example.shared.DrawAction;
@@ -8,6 +9,8 @@ import com.example.shared.Tool;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.function.Consumer;
 
 public class WhiteBoardCanvas extends JPanel {
@@ -22,10 +25,13 @@ public class WhiteBoardCanvas extends JPanel {
     // Line tool fields
     private int startX, startY;
     private int currentX, currentY;
+    private int mouseX, mouseY;
     private boolean drawing = false;
 
     private int drawStrokeSize = 2;
     private int eraserStrokeSize = 10;
+
+    private String username;
 
     public WhiteBoardCanvas(int width, int height) {
         setPreferredSize(new Dimension(width, height));
@@ -33,6 +39,14 @@ public class WhiteBoardCanvas extends JPanel {
         setDoubleBuffered(true);
         initCanvas();
         addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                mouseX = e.getX();
+                mouseY = e.getY();
+                // Draw the username bubble
+                repaint();
+            }
+
             @Override
             public void mousePressed(MouseEvent e) {
                 // Save the location pressed
@@ -81,12 +95,12 @@ public class WhiteBoardCanvas extends JPanel {
             public void mouseDragged(MouseEvent e) {
                 switch (currentTool) {
                     case FREE_DRAW:
-                    // TODO send over to the remote server
+                        // TODO send over to the remote server
                         int x = e.getX();
                         int y = e.getY();
                         // g2d.drawLine(prevX, prevY, x, y);
                         DrawAction action = new DrawAction(currentTool, prevX, prevY, x, y, g2d.getColor(),
-                            drawStrokeSize);
+                                drawStrokeSize);
                         if (drawListener != null)
                             drawListener.accept(action);
                         applyDrawAction(action);
@@ -107,13 +121,13 @@ public class WhiteBoardCanvas extends JPanel {
                         y = e.getY();
                         Color originalColor = g2d.getColor();
                         // TODO use getBackground() and support themes
-             
-                        // g2d.setStroke(new BasicStroke(eraserStrokeSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+                        // g2d.setStroke(new BasicStroke(eraserStrokeSize, BasicStroke.CAP_ROUND,
+                        // BasicStroke.JOIN_ROUND));
                         // g2d.drawLine(prevX, prevY, x, y);
-                  
 
                         action = new DrawAction(currentTool, prevX, prevY, x, y, Color.WHITE,
-                            eraserStrokeSize);
+                                eraserStrokeSize);
                         if (drawListener != null)
                             drawListener.accept(action);
                         applyDrawAction(action);
@@ -141,11 +155,18 @@ public class WhiteBoardCanvas extends JPanel {
         clear(); // fill with white initially
     }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         // Boilerplate code
         super.paintComponent(g);
         g.drawImage(canvasImage, 0, 0, null);
+
+        // Display username bubble 
+        drawUsernameBubble(g, username, mouseX, mouseY);
 
         // === Local preview for drawing tools ===
 
@@ -314,6 +335,44 @@ public class WhiteBoardCanvas extends JPanel {
         g2d.setColor(originalColor);
         g2d.setStroke(originalStroke);
 
+    }
+
+    private void drawUsernameBubble(Graphics g, String text, int x, int y) {
+        FontMetrics fm = g.getFontMetrics();
+        int textWidth = fm.stringWidth(text);
+        int textHeight = fm.getHeight();
+
+        int padding = 6;
+        int bubbleWidth = textWidth + padding * 2;
+        int bubbleHeight = textHeight;
+
+        int bubbleX = x + 12;  // offset so it's not under the cursor
+        int bubbleY = y - 20;
+
+        // bubble background
+        g.setColor(new Color(0, 0, 0, 150));
+        g.fillRoundRect(bubbleX, bubbleY, bubbleWidth, bubbleHeight, 10, 10);
+
+        // text
+        g.setColor(Color.WHITE);
+        g.drawString(text, bubbleX + padding, bubbleY + textHeight - 4);
+    }
+
+    // FIXME convert to DrawAction objects which will also allow select & delete
+    // objects
+    // FIXME this scales the image, does it stretch it if the server GUI gets stretched?
+    public void loadFromImage(File file) throws IOException {
+        BufferedImage backgroundImage = ImageIO.read(file);
+        g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
+        repaint();
+    }
+
+    public void saveCanvasToFile(File file) throws IOException {
+        BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = image.createGraphics();
+        paint(g2);
+        g2.dispose();
+        ImageIO.write(image, "png", file);
     }
 
 }

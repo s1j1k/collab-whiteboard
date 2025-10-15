@@ -100,9 +100,19 @@ public class ToolBarPanel extends JPanel {
 
             });
 
+            // Select a default button
+            // TODO change to select tool
+            if (t == Tool.LINE) {
+                btn.setSelected(true);
+                canvas.setCurrentTool(t);
+                strokeSizeSlider.setValue(canvas.getDrawStrokeSize());
+            }
+
             buttonGroup.add(btn);
             toolBar.add(btn);
         }
+
+        
 
         // === Color Button ===
         colorButton = new JButton(IconUtils.loadScaledIcon("/icons/colors.png", 24, 24));
