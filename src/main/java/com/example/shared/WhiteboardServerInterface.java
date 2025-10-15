@@ -9,6 +9,5 @@ import java.rmi.RemoteException;
 public interface WhiteboardServerInterface extends Remote {
     void registerClient(WhiteBoardClientInterface client) throws RemoteException;
     void sendMessage(String username, String message) throws RemoteException;
-    void receiveDrawAction(DrawAction action) throws RemoteException;
-    // void sendDrawAction(DrawAction action) throws RemoteException;
+    void broadcastDrawAction(DrawAction action) throws RemoteException;
 }

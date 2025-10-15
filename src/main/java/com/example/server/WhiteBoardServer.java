@@ -38,21 +38,28 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
     /** 
      * Client sends this drawing to the server
      */
-    @Override
-    public void receiveDrawAction(DrawAction action) throws RemoteException {
-        SwingUtilities.invokeLater(() -> gui.getCanvas().applyDrawAction(action));
-    }
-
     // @Override
-    // public synchronized void sendDrawAction(DrawAction action) throws RemoteException {
-    //     for (WhiteBoardClientInterface client : clients) {
-    //         try {
-    //             client.receiveDrawAction(action);
-    //         } catch (RemoteException e) {
-    //             System.err.println("Failed to send action to a client: " + e.getMessage());
-    //         }
-    //     }
+    // public void receiveDrawAction(DrawAction action) throws RemoteException {
+    //     SwingUtilities.invokeLater(() -> gui.getCanvas().applyDrawAction(action));
     // }
+
+    // FIXME make it thread safe
+    @Override
+    public synchronized void broadcastDrawAction(DrawAction action) throws RemoteException {
+        // Update the server GUI canvas
+        System.out.println("Updating server canvas...");
+        SwingUtilities.invokeLater(() -> gui.getCanvas().applyDrawAction(action));
+
+        // Update client canvases
+        System.out.println("Updating client canvases...");
+        for (WhiteBoardClientInterface client : clients) {
+            try {
+                client.receiveDrawAction(action);
+            } catch (RemoteException e) {
+                System.err.println("Failed to send action to a client: " + e.getMessage());
+            }
+        }
+    }
 
     public void start(int port) {
         try {
@@ -64,6 +71,16 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
 
             // Launch Server GUI safely on the Event Dispatch Thread
             SwingUtilities.invokeLater(() -> gui.setVisible(true));
+
+
+            // Whenever server draws locally, send it to all of the clients
+            gui.getCanvas().setDrawListener(action -> {
+                try {
+                    broadcastDrawAction(action);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();

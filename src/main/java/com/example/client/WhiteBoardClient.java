@@ -43,10 +43,15 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
             Registry registry = LocateRegistry.getRegistry(host, port);
             WhiteboardServerInterface server = (WhiteboardServerInterface) registry.lookup("MessageService");
 
+            // Register client
+            server.registerClient(this);
+
+            // TODO init canvas with what's on server already
+
              // Whenever client draws locally, send it to the server
             gui.getCanvas().setDrawListener(action -> {
                 try {
-                    server.receiveDrawAction(action);
+                    server.broadcastDrawAction(action);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
