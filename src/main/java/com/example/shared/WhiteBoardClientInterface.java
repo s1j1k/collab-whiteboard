@@ -9,4 +9,5 @@ import java.rmi.RemoteException;
 
 public interface WhiteBoardClientInterface extends Remote {
     void receiveDrawAction(DrawAction action) throws RemoteException;
+    void receiveChatMessage(ChatMessage message) throws RemoteException;
 }

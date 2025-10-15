@@ -11,6 +11,7 @@ import java.util.List;
 import javax.swing.SwingUtilities;
 
 import com.example.gui.ServerGUI;
+import com.example.shared.ChatMessage;
 import com.example.shared.DrawAction;
 import com.example.shared.WhiteBoardClientInterface;
 import com.example.shared.WhiteboardServerInterface;
@@ -29,14 +30,25 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
         System.out.println("Client registered: " + client);
     }
 
+    // TODO save server owner's username also
     @Override
-    public void sendMessage(String username, String message) throws RemoteException {
-        System.out.println("Message received from " + username + ": " + message);
+    public void sendChatMessage(ChatMessage message) throws RemoteException {
+        System.out.println("Message received: " + message);
         // Additional server-side logic here, e.g., logging or storing the message
         // TODO update chat window in server and all the clients
         // FIXME add some formatting / color
-        gui.getChatPanel().appendMessage(username + ": " + message);
+        gui.getChatPanel().appendMessage(message.toString());
         // Send to all clients
+
+        // Update client chat windows
+        System.out.println("Updating client chat windows...");
+        for (WhiteBoardClientInterface client : clients) {
+            try {
+                client.receiveChatMessage(message);
+            } catch (RemoteException e) {
+                System.err.println("Failed to send action to a client: " + e.getMessage());
+            }
+        }
     }
 
     /**

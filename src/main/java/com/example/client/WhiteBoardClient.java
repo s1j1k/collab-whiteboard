@@ -8,6 +8,7 @@ import java.util.Scanner;
 import javax.swing.SwingUtilities;
 
 import com.example.gui.ClientGUI;
+import com.example.shared.ChatMessage;
 import com.example.shared.DrawAction;
 import com.example.shared.WhiteBoardClientInterface;
 import com.example.shared.WhiteboardServerInterface;
@@ -26,10 +27,14 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         this.username = username;
     }
 
-    // FIXME not implemented
     @Override
     public void receiveDrawAction(DrawAction action) throws RemoteException {
         SwingUtilities.invokeLater(() -> gui.getCanvas().applyDrawAction(action));
+    }
+
+    @Override
+    public void receiveChatMessage(ChatMessage message) throws RemoteException {
+        gui.getChatPanel().appendMessage(message.toString());
     }
 
     public void start() {
@@ -71,7 +76,7 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
                 // send message to server via RMI 
                 System.out.println("Sending: " + message);
                 try {
-                    server.sendMessage(username, message);
+                    server.sendChatMessage(new ChatMessage(username, message));
                 } catch (RemoteException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
