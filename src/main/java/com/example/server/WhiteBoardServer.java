@@ -7,6 +7,8 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.SwingUtilities;
 
@@ -14,11 +16,13 @@ import com.example.gui.ServerGUI;
 import com.example.shared.ChatMessage;
 import com.example.shared.DrawAction;
 import com.example.shared.WhiteBoardClientInterface;
-import com.example.shared.WhiteboardServerInterface;
+import com.example.shared.WhiteBoardServerInterface;
 
-public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardServerInterface {
+public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardServerInterface {
     ServerGUI gui = new ServerGUI();
-    private final List<WhiteBoardClientInterface> clients = new ArrayList<>();
+    // private final List<WhiteBoardClientInterface> clients = new ArrayList<>();
+    private final Map<String, WhiteBoardClientInterface> connectedClients = new ConcurrentHashMap<>();
+
     // FIXME so I can use the host
     private String host;
     private int port;
@@ -32,9 +36,21 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
     }
 
     @Override
-    public synchronized void registerClient(WhiteBoardClientInterface client) throws RemoteException {
-        clients.add(client);
-        System.out.println("Client registered: " + client);
+    public synchronized boolean registerClient(String username, WhiteBoardClientInterface client)
+            throws RemoteException {
+        if (username == null || client == null) {
+            System.out.println("Registration failed: null username or client");
+            return false;
+        }
+
+        if (connectedClients.containsKey(username)) {
+            System.out.println("Registration failed: username already exists");
+            return false;
+        }
+
+        connectedClients.put(username, client);
+        System.out.println("Client registered: " + username);
+        return true;
     }
 
     // TODO save server owner's username also
@@ -49,7 +65,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
 
         // Update client chat windows
         System.out.println("Updating client chat windows...");
-        for (WhiteBoardClientInterface client : clients) {
+        for (WhiteBoardClientInterface client : connectedClients.values()) {
             try {
                 client.receiveChatMessage(message);
             } catch (RemoteException e) {
@@ -67,7 +83,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
 
         // Update client canvases
         System.out.println("Updating client canvases...");
-        for (WhiteBoardClientInterface client : clients) {
+        for (WhiteBoardClientInterface client : connectedClients.values()) {
             try {
                 client.receiveDrawAction(action);
             } catch (RemoteException e) {
@@ -76,13 +92,19 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteboardS
         }
     }
 
+    // TODO include in client finally block
+    @Override
+    public synchronized void unregisterClient(String username) throws RemoteException {
+        connectedClients.remove(username);
+        System.out.println("Client disconnected: " + username);
+    }
+
     public void start() {
         try {
             // Create and bind the remote object in the RMI registry
-            // RemoteMessageService server = new WhiteBoardServer();
             Registry registry = LocateRegistry.createRegistry(port);
-            registry.rebind("MessageService", this);
-            System.out.println("Message Server is ready.");
+            registry.rebind("WhiteBoardService", this);
+            System.out.println("Whiteboard Server is ready.");
 
             // Launch Server GUI safely on the Event Dispatch Thread
             SwingUtilities.invokeLater(() -> gui.setVisible(true));

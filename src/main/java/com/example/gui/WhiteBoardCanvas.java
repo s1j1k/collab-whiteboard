@@ -40,14 +40,6 @@ public class WhiteBoardCanvas extends JPanel {
         initCanvas();
         addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseMoved(MouseEvent e) {
-                mouseX = e.getX();
-                mouseY = e.getY();
-                // Draw the username bubble
-                repaint();
-            }
-
-            @Override
             public void mousePressed(MouseEvent e) {
                 // Save the location pressed
                 startX = e.getX();
@@ -91,6 +83,14 @@ public class WhiteBoardCanvas extends JPanel {
         });
 
         addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                mouseX = e.getX();
+                mouseY = e.getY();
+                // Draw the username bubble
+                repaint();
+            }
+
             @Override
             public void mouseDragged(MouseEvent e) {
                 switch (currentTool) {
@@ -165,7 +165,7 @@ public class WhiteBoardCanvas extends JPanel {
         super.paintComponent(g);
         g.drawImage(canvasImage, 0, 0, null);
 
-        // Display username bubble 
+        // Display username bubble
         drawUsernameBubble(g, username, mouseX, mouseY);
 
         // === Local preview for drawing tools ===
@@ -346,7 +346,7 @@ public class WhiteBoardCanvas extends JPanel {
         int bubbleWidth = textWidth + padding * 2;
         int bubbleHeight = textHeight;
 
-        int bubbleX = x + 12;  // offset so it's not under the cursor
+        int bubbleX = x + 12; // offset so it's not under the cursor
         int bubbleY = y - 20;
 
         // bubble background
@@ -360,7 +360,8 @@ public class WhiteBoardCanvas extends JPanel {
 
     // FIXME convert to DrawAction objects which will also allow select & delete
     // objects
-    // FIXME this scales the image, does it stretch it if the server GUI gets stretched?
+    // FIXME this scales the image, does it stretch it if the server GUI gets
+    // stretched?
     public void loadFromImage(File file) throws IOException {
         BufferedImage backgroundImage = ImageIO.read(file);
         g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);

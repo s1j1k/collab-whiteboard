@@ -6,13 +6,14 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Scanner;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import com.example.gui.ClientGUI;
 import com.example.shared.ChatMessage;
 import com.example.shared.DrawAction;
 import com.example.shared.WhiteBoardClientInterface;
-import com.example.shared.WhiteboardServerInterface;
+import com.example.shared.WhiteBoardServerInterface;
 
 public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardClientInterface {
 
@@ -20,14 +21,16 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     private int port;
     private String username;
     // FIXME is it ok to launch GUI here?
-    private ClientGUI gui = new ClientGUI();
+    private ClientGUI gui;
+    private WhiteBoardServerInterface serverRef;
+    private WhiteBoardClientInterface clientStub;
 
-    public WhiteBoardClient(String host, int port, String username) throws RemoteException {
+    public WhiteBoardClient(String host, int port) throws RemoteException {
         super();
         this.host = host;
         this.port = port;
-        this.username = username;
-
+        // this.username = username;
+        gui = new ClientGUI(this);
     }
 
     @Override
@@ -40,53 +43,59 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         gui.getChatPanel().appendMessage(message.toString());
     }
 
+    public void connect() throws Exception {
+        Registry registry = LocateRegistry.getRegistry(host, port);
+        serverRef = (WhiteBoardServerInterface) registry.lookup("WhiteBoardService");
+    }
+
+    public boolean register(String username, WhiteBoardClientInterface clientStub) throws RemoteException {
+        this.username = username;
+        this.clientStub = clientStub;
+        return serverRef.registerClient(username, clientStub);
+    }
+
+     public WhiteBoardServerInterface getServerRef() {
+        return serverRef;
+    }
+
+    public WhiteBoardClientInterface getClientStub() {
+        return clientStub;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+
+
     public void start() {
 
         try {
             // Launch the GUI
-            // FIXME do this last
+            // FIXME do this last ?
             SwingUtilities.invokeLater(() -> gui.setVisible(true));
 
-            // Get the RMI registry and the remote object
-            Registry registry = LocateRegistry.getRegistry(host, port);
-            WhiteboardServerInterface server = (WhiteboardServerInterface) registry.lookup("MessageService");
-
-            // Register client
-            server.registerClient(this);
-
             // TODO init canvas with what's on server already
-
+            // FIXME add to when gui gets init
             // Whenever client draws locally, send it to the server
             gui.getCanvas().setDrawListener(action -> {
                 try {
-                    server.broadcastDrawAction(action);
+                    getServerRef().broadcastDrawAction(action);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
 
-            // show the client GUI containing this canvas
-            System.out.println("✅ Connected to server");
-
-            // Scanner scanner = new Scanner(System.in);
-            // System.out.print("Enter your username: ");
-            // String username = scanner.nextLine();
-
-            // FIXME implement this in the client GUI chat window instead
-            // System.out.println("You can now send messages to the server. Type 'exit' to
-            // quit.");
             gui.getChatPanel().setChatListener(message -> {
                 // send message to server via RMI
                 System.out.println("Sending: " + message);
                 try {
-                    server.sendChatMessage(new ChatMessage(username, message));
+                    getServerRef().sendChatMessage(new ChatMessage(username, message));
                 } catch (RemoteException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             });
-
-            gui.getCanvas().setUsername(username);
 
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
