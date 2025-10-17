@@ -49,7 +49,4 @@ public abstract class AbstractWhiteBoardGUI extends JFrame {
     public ChatPanel getChatPanel() {
         return chatPanel;
     }
-
-    // @Override
-    // public void actionPerformed(ActionEvent e) {
 }

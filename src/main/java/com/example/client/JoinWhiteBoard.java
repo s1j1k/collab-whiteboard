@@ -1,10 +1,9 @@
 package com.example.client;
 
-import java.rmi.RemoteException;
-
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import com.example.gui.ClientGUI;
 import com.example.gui.JoinWindow;
 
 public class JoinWhiteBoard {
@@ -28,12 +27,14 @@ public class JoinWhiteBoard {
 
         try {
             WhiteBoardClient client = new WhiteBoardClient(serverAddress, port);
+            // Connect to server
             client.connect();
 
             SwingUtilities.invokeLater(() -> {
                 JoinWindow joinWindow = new JoinWindow(client);
                 joinWindow.setVisible(true);
             });
+
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Failed to connect to server: " + e.getMessage());

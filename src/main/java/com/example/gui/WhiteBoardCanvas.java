@@ -37,6 +37,7 @@ public class WhiteBoardCanvas extends JPanel {
         setPreferredSize(new Dimension(width, height));
         setBackground(Color.WHITE);
         setDoubleBuffered(true);
+        setOpaque(true);
         initCanvas();
         addMouseListener(new MouseAdapter() {
             @Override
@@ -362,18 +363,18 @@ public class WhiteBoardCanvas extends JPanel {
     // objects
     // FIXME this scales the image, does it stretch it if the server GUI gets
     // stretched?
-    public void loadFromImage(File file) throws IOException {
-        BufferedImage backgroundImage = ImageIO.read(file);
-        g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
-        repaint();
-    }
+    // public void loadFromImage(File file) throws IOException {
+    //     BufferedImage backgroundImage = ImageIO.read(file);
+    //     g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
+    //     repaint();
+    // }
 
-    public void saveCanvasToFile(File file) throws IOException {
-        BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = image.createGraphics();
-        paint(g2);
-        g2.dispose();
-        ImageIO.write(image, "png", file);
-    }
+    // public void saveCanvasToFile(File file) throws IOException {
+    //     BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+    //     Graphics2D g2 = image.createGraphics();
+    //     paint(g2);
+    //     g2.dispose();
+    //     ImageIO.write(image, "png", file);
+    // }
 
 }

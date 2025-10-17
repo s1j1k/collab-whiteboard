@@ -21,7 +21,7 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     private int port;
     private String username;
     // FIXME is it ok to launch GUI here?
-    private ClientGUI gui;
+    private ClientGUI gui = new ClientGUI();
     private WhiteBoardServerInterface serverRef;
     private WhiteBoardClientInterface clientStub;
 
@@ -29,8 +29,6 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         super();
         this.host = host;
         this.port = port;
-        // this.username = username;
-        gui = new ClientGUI(this);
     }
 
     @Override
@@ -54,54 +52,52 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         return serverRef.registerClient(username, clientStub);
     }
 
-     public WhiteBoardServerInterface getServerRef() {
+    public WhiteBoardServerInterface getServerRef() {
         return serverRef;
     }
 
+    // FIXME don't use this?
     public WhiteBoardClientInterface getClientStub() {
-        return clientStub;
+        // TODO ensure its always this
+        return this;
     }
 
     public String getUsername() {
         return username;
     }
 
+    public void launchClientGui() {
 
+        // Launch Server GUI safely on the Event Dispatch Thread
+        SwingUtilities.invokeLater(() -> {
+            gui.pack(); // respect preferred sizes
+            gui.setLocationRelativeTo(null); // center on screen
+            gui.setVisible(true);
+            // gui.setVisible(true);
+        });
 
-    public void start() {
+        gui.getCanvas().setUsername(username);
 
-        try {
-            // Launch the GUI
-            // FIXME do this last ?
-            SwingUtilities.invokeLater(() -> gui.setVisible(true));
+        // Send draw actions to server
+        gui.getCanvas().setDrawListener(action -> {
+            try {
+                getServerRef().broadcastDrawAction(action);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
 
-            // TODO init canvas with what's on server already
-            // FIXME add to when gui gets init
-            // Whenever client draws locally, send it to the server
-            gui.getCanvas().setDrawListener(action -> {
-                try {
-                    getServerRef().broadcastDrawAction(action);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-
-            gui.getChatPanel().setChatListener(message -> {
-                // send message to server via RMI
-                System.out.println("Sending: " + message);
-                try {
-                    getServerRef().sendChatMessage(new ChatMessage(username, message));
-                } catch (RemoteException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            });
-
-        } catch (Exception e) {
-            System.err.println("Client exception: " + e.toString());
-            e.printStackTrace();
-        }
+        // Send messages to server
+        gui.getChatPanel().setChatListener(message -> {
+            // send message to server via RMI
+            System.out.println("Sending: " + message);
+            try {
+                getServerRef().sendChatMessage(new ChatMessage(username, message));
+            } catch (RemoteException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        });
 
     }
-
 }

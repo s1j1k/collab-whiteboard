@@ -39,6 +39,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     public synchronized boolean registerClient(String username, WhiteBoardClientInterface client)
             throws RemoteException {
         if (username == null || client == null) {
+            // TODO share what happened to the client error message
             System.out.println("Registration failed: null username or client");
             return false;
         }

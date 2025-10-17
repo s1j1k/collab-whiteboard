@@ -1,7 +1,6 @@
 package com.example.gui;
 
 import com.example.client.WhiteBoardClient;
-import com.example.shared.WhiteBoardClientInterface;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,10 +75,7 @@ public class JoinWindow extends JFrame {
         // Close join window
         dispose();
 
-        // Launch main GUI
-        SwingUtilities.invokeLater(() -> {
-            ClientGUI gui = new ClientGUI(client);
-            gui.setVisible(true);
-        });
+        // Launch whiteboard gui
+        client.launchClientGui();
     }
 }
