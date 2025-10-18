@@ -1,10 +1,12 @@
 package com.example.gui;
 
 import com.example.shared.ChatListener;
+import com.example.shared.ChatMessage;
 import com.formdev.flatlaf.FlatLightLaf;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
 public class ChatPanel extends JPanel {
     private final JTextArea chatArea;
@@ -65,4 +67,11 @@ public class ChatPanel extends JPanel {
     public void setChatListener(ChatListener listener) {
         this.listener = listener;
     }
+
+    public void loadHistory(ArrayList<ChatMessage> history) {
+    for (ChatMessage msg : history) {
+        appendMessage(msg.toString());
+    }
+}
+
 }

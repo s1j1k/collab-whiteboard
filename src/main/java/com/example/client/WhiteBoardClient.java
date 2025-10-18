@@ -4,6 +4,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import javax.swing.JOptionPane;
@@ -67,6 +69,23 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     }
 
     public void launchClientGui() {
+
+        // TODO implement this
+        // Fetch initial state
+        ArrayList<ChatMessage> history;
+        byte[] snapshot;
+        try {
+            history = serverRef.getChatHistory();
+            snapshot = serverRef.getCanvasSnapshot();
+            // Update GUI safely
+            SwingUtilities.invokeLater(() -> {
+                gui.getChatPanel().loadHistory(history);
+                gui.getCanvas().loadCanvasImage(snapshot);
+            });
+        } catch (RemoteException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         // Launch Server GUI safely on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {

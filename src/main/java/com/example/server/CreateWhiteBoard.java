@@ -35,7 +35,7 @@ public class CreateWhiteBoard {
         try {
             // Start the RMI whiteboard server
             // FIXME do this on a separate thread
-            WhiteBoardServer server = new WhiteBoardServer(host, port, username);
+            WhiteBoardServer server = new WhiteBoardServer(port, username);
             // FIXME need host name?
             // TODO add drawing interface etc. etc.
             server.start();

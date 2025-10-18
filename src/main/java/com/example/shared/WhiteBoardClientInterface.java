@@ -2,6 +2,7 @@ package com.example.shared;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.List;
 
 /**
  * Messages to be sent from Server to Client

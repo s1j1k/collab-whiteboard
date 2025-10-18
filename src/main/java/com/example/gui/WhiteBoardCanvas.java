@@ -9,6 +9,7 @@ import com.example.shared.Tool;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -147,6 +148,8 @@ public class WhiteBoardCanvas extends JPanel {
     }
 
     private void initCanvas() {
+        // FIXME load from file if there is a file
+        // FIXME remove canbas image
         canvasImage = new BufferedImage(800, 600, BufferedImage.TYPE_INT_ARGB);
         g2d = canvasImage.createGraphics();
         g2d.setColor(Color.BLACK);
@@ -295,6 +298,7 @@ public class WhiteBoardCanvas extends JPanel {
      * 
      * @param action
      */
+    // TODO move this to drawAction
     public void applyDrawAction(DrawAction action) {
         // draw using Graphics2D
         Stroke originalStroke = g2d.getStroke();
@@ -338,6 +342,7 @@ public class WhiteBoardCanvas extends JPanel {
 
     }
 
+    // FIXME ensure username is set
     private void drawUsernameBubble(Graphics g, String text, int x, int y) {
         FontMetrics fm = g.getFontMetrics();
         int textWidth = fm.stringWidth(text);
@@ -363,18 +368,37 @@ public class WhiteBoardCanvas extends JPanel {
     // objects
     // FIXME this scales the image, does it stretch it if the server GUI gets
     // stretched?
-    // public void loadFromImage(File file) throws IOException {
-    //     BufferedImage backgroundImage = ImageIO.read(file);
-    //     g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
-    //     repaint();
-    // }
+    public void loadFromFile(File file) throws IOException {
+        BufferedImage backgroundImage = ImageIO.read(file);
+        g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
+        repaint();
+    }
 
-    // public void saveCanvasToFile(File file) throws IOException {
-    //     BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-    //     Graphics2D g2 = image.createGraphics();
-    //     paint(g2);
-    //     g2.dispose();
-    //     ImageIO.write(image, "png", file);
-    // }
+    public void saveCanvasToFile(File file) throws IOException {
+        BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = image.createGraphics();
+        paint(g2);
+        g2.dispose();
+        ImageIO.write(image, "png", file);
+    }
+
+    public void loadCanvasImage(byte[] imageData) {
+        try {
+            canvasImage = ImageIO.read(new ByteArrayInputStream(imageData));
+            // FIXME move this to the initialization part ?
+            g2d.dispose();
+            g2d = canvasImage.createGraphics();
+            g2d.setColor(Color.BLACK);
+            // Make the stroke have circular ends
+            g2d.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public BufferedImage getCanvasImage() {
+        return canvasImage;
+    }
 
 }

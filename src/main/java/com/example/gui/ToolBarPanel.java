@@ -3,7 +3,6 @@ package com.example.gui;
 import javax.swing.*;
 import java.awt.*;
 
-import com.example.shared.IconUtils;
 import com.example.shared.Tool;
 import com.formdev.flatlaf.FlatLightLaf;
 

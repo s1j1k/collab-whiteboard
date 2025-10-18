@@ -1,5 +1,11 @@
 package com.example.server;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 // MessageServer.java
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -10,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
 
 import com.example.gui.ServerGUI;
@@ -19,32 +26,30 @@ import com.example.shared.WhiteBoardClientInterface;
 import com.example.shared.WhiteBoardServerInterface;
 
 public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardServerInterface {
+    // FIXME take username as a param
     ServerGUI gui = new ServerGUI();
-    // private final List<WhiteBoardClientInterface> clients = new ArrayList<>();
     private final Map<String, WhiteBoardClientInterface> connectedClients = new ConcurrentHashMap<>();
-
-    // FIXME so I can use the host
-    private String host;
+    private List<ChatMessage> chatHistory = new ArrayList<ChatMessage>();
+    // private List<DrawAction> drawHistory = new ArrayList<DrawAction>();
     private int port;
     private String username;
 
-    protected WhiteBoardServer(String host, int port, String username) throws RemoteException {
+    protected WhiteBoardServer(int port, String username) throws RemoteException {
         super();
-        this.host = host;
         this.port = port;
         this.username = username;
-    }
+        }
 
     @Override
     public synchronized boolean registerClient(String username, WhiteBoardClientInterface client)
             throws RemoteException {
         if (username == null || client == null) {
-            // TODO share what happened to the client error message
+            // TODO share what happened to the client error message instead of
             System.out.println("Registration failed: null username or client");
             return false;
         }
 
-        if (connectedClients.containsKey(username)) {
+        if (connectedClients.containsKey(username) || username.equals(this.username)) {
             System.out.println("Registration failed: username already exists");
             return false;
         }
@@ -54,17 +59,16 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         return true;
     }
 
-    // TODO save server owner's username also
     @Override
     public void sendChatMessage(ChatMessage message) throws RemoteException {
         System.out.println("Message received: " + message);
-        // Additional server-side logic here, e.g., logging or storing the message
-        // TODO update chat window in server and all the clients
-        // FIXME add some formatting / color
-        gui.getChatPanel().appendMessage(message.toString());
-        // Send to all clients
+        // Store the message in chat history
+        chatHistory.add(message);
 
-        // Update client chat windows
+        // TODO improvement: add some formatting / color
+        gui.getChatPanel().appendMessage(message.toString());
+
+        // Send to all client chat windows
         System.out.println("Updating client chat windows...");
         for (WhiteBoardClientInterface client : connectedClients.values()) {
             try {
@@ -98,6 +102,22 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     public synchronized void unregisterClient(String username) throws RemoteException {
         connectedClients.remove(username);
         System.out.println("Client disconnected: " + username);
+    }
+
+    @Override
+    public synchronized ArrayList<ChatMessage> getChatHistory() throws RemoteException {
+        return new ArrayList<>(chatHistory);
+    }
+
+    @Override
+    public synchronized byte[] getCanvasSnapshot() throws RemoteException {
+        BufferedImage canvasImage = gui.getCanvas().getCanvasImage();
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            ImageIO.write(canvasImage, "png", baos);
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new RemoteException("Failed to encode canvas", e);
+        }
     }
 
     public void start() {
