@@ -15,6 +15,7 @@ import com.example.gui.ClientGUI;
 import com.example.shared.ChatMessage;
 import com.example.shared.CursorPosition;
 import com.example.shared.DrawAction;
+import com.example.shared.UserListUpdate;
 import com.example.shared.WhiteBoardClientInterface;
 import com.example.shared.WhiteBoardServerInterface;
 
@@ -47,6 +48,11 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     @Override
     public void updateCursorPosition(CursorPosition pos) throws RemoteException {
         SwingUtilities.invokeLater(() -> gui.getCanvas().updateCursorPosition(pos));
+    }
+
+    @Override
+    public void receiveUserListUpdate(UserListUpdate update) throws RemoteException {
+        SwingUtilities.invokeLater(() -> gui.updateUserList(update.getUsernames()));
     }
 
     public void connect() throws Exception {

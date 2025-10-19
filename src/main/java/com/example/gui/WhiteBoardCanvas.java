@@ -200,14 +200,9 @@ public class WhiteBoardCanvas extends JPanel {
         g.drawImage(canvasImage, 0, 0, null);
 
         // Display username bubble
-        // drawUsernameBubble(g, username, mouseX, mouseY);
-        // g.setColor(new Color(0, 0, 0, 100));
         // TODO improvement: make a different random color associated to each user
         for (var entry : cursors.entrySet()) {
             Point p = entry.getValue();
-            // g.fillOval(p.x - 5, p.y - 5, 10, 10);
-            // g.setColor(Color.WHITE);
-            // g.drawString(entry.getKey(), p.x + 10, p.y);
             drawUsernameBubble(g, entry.getKey(), p.x, p.y);
         }
 
@@ -249,16 +244,7 @@ public class WhiteBoardCanvas extends JPanel {
     public void updateCursorPosition(CursorPosition pos) {
         cursors.put(pos.username, new Point(pos.x, pos.y));
         repaint();
-        // FIXME debugging
-        System.out.println("Cursor position updated: " + cursors);
     }
-
-    // TODO update the client based on the server broadcast
-    // FIXME add remote methods
-    // public void drawRemoteLine(int x1, int y1, int x2, int y2) {
-    // g2d.drawLine(x1, y1, x2, y2);
-    // repaint();
-    // }
 
     public void setDrawListener(Consumer<DrawAction> listener) {
         this.drawListener = listener;

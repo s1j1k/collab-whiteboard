@@ -23,6 +23,7 @@ import com.example.gui.ServerGUI;
 import com.example.shared.ChatMessage;
 import com.example.shared.CursorPosition;
 import com.example.shared.DrawAction;
+import com.example.shared.UserListUpdate;
 import com.example.shared.WhiteBoardClientInterface;
 import com.example.shared.WhiteBoardServerInterface;
 
@@ -56,6 +57,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         }
 
         connectedClients.put(username, client);
+        broadcastUserList();
         System.out.println("Client registered: " + username);
         return true;
     }
@@ -102,6 +104,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     @Override
     public synchronized void unregisterClient(String username) throws RemoteException {
         connectedClients.remove(username);
+        broadcastUserList();
         System.out.println("Client disconnected: " + username);
     }
 
@@ -135,6 +138,17 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
             }
         }
     }
+
+    private void broadcastUserList() {
+    UserListUpdate update = new UserListUpdate(new ArrayList<>(connectedClients.keySet()));
+    for (WhiteBoardClientInterface c : connectedClients.values()) {
+        try {
+            c.receiveUserListUpdate(update);
+        } catch (RemoteException e) {
+            System.err.println("Failed to update user list: " + e.getMessage());
+        }
+    }
+}
 
     public void start() {
         try {
