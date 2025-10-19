@@ -23,6 +23,6 @@ public interface WhiteBoardServerInterface extends Remote {
 
     void broadcastCursorPosition(CursorPosition position) throws RemoteException;
 
-    void broadcastUserListUpdate(UserListUpdate update) throws RemoteException;
+    // void broadcastUserList() throws RemoteException;
 
 }
