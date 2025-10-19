@@ -123,6 +123,10 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
 
     @Override
     public synchronized void broadcastCursorPosition(CursorPosition pos) throws RemoteException {
+        // Update server cursor positions list
+        SwingUtilities.invokeLater(() -> gui.getCanvas().updateCursorPosition(pos));
+
+        // Update clients cursor positions list
         for (WhiteBoardClientInterface c : connectedClients.values()) {
             try {
                 c.updateCursorPosition(pos);
@@ -142,6 +146,9 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
             // Launch Server GUI safely on the Event Dispatch Thread
             SwingUtilities.invokeLater(() -> gui.setVisible(true));
 
+            // FIXME add this to initialization/constructor of the GUI
+            gui.getCanvas().setUsername(username);
+
             // Whenever server draws locally, send it to all of the clients
             gui.getCanvas().setDrawListener(action -> {
                 try {
@@ -151,7 +158,15 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
                 }
             });
 
-            gui.getCanvas().setUsername(username);
+            // Send server cursor position to clients
+            gui.getCanvas().setCursorListener(pos -> {
+                try {
+                    broadcastCursorPosition(pos);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+            
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();

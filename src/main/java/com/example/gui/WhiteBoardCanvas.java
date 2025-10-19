@@ -107,16 +107,18 @@ public class WhiteBoardCanvas extends JPanel {
                     // Create cursor update
                     CursorPosition pos = new CursorPosition(username, e.getX(), e.getY());
 
-                    // Send to server asynchronously
-                    cursorListener.accept(pos);
+                    // Send to server
+                    if (cursorListener != null) {
+                        cursorListener.accept(pos);
+                    }
                     // new Thread(() -> {
-                    //     try {
-                    //         // client.getServerRef().broadcastCursorPosition(pos);
-                    //         if (cursorListener != null)
-                    //             cursorListener.accept(pos);
-                    //     } catch (Exception ex) {
-                    //         ex.printStackTrace();
-                    //     }
+                    // try {
+                    // // client.getServerRef().broadcastCursorPosition(pos);
+                    // if (cursorListener != null)
+                    // cursorListener.accept(pos);
+                    // } catch (Exception ex) {
+                    // ex.printStackTrace();
+                    // }
                     // }).start();
                 }
             }
@@ -198,7 +200,7 @@ public class WhiteBoardCanvas extends JPanel {
         g.drawImage(canvasImage, 0, 0, null);
 
         // Display username bubble
-        drawUsernameBubble(g, username, mouseX, mouseY);
+        // drawUsernameBubble(g, username, mouseX, mouseY);
         // g.setColor(new Color(0, 0, 0, 100));
         // TODO improvement: make a different random color associated to each user
         for (var entry : cursors.entrySet()) {
@@ -248,7 +250,7 @@ public class WhiteBoardCanvas extends JPanel {
         cursors.put(pos.username, new Point(pos.x, pos.y));
         repaint();
         // FIXME debugging
-        System.out.println("Cursor position updated: "  + cursors);
+        System.out.println("Cursor position updated: " + cursors);
     }
 
     // TODO update the client based on the server broadcast
