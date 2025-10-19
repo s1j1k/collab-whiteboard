@@ -13,6 +13,7 @@ import javax.swing.SwingUtilities;
 
 import com.example.gui.ClientGUI;
 import com.example.shared.ChatMessage;
+import com.example.shared.CursorPosition;
 import com.example.shared.DrawAction;
 import com.example.shared.WhiteBoardClientInterface;
 import com.example.shared.WhiteBoardServerInterface;
@@ -41,6 +42,11 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     @Override
     public void receiveChatMessage(ChatMessage message) throws RemoteException {
         gui.getChatPanel().appendMessage(message.toString());
+    }
+
+    @Override
+    public void updateCursorPosition(CursorPosition pos) throws RemoteException {
+        SwingUtilities.invokeLater(() -> gui.getCanvas().updateCursorPosition(pos));
     }
 
     public void connect() throws Exception {
@@ -101,6 +107,15 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         gui.getCanvas().setDrawListener(action -> {
             try {
                 getServerRef().broadcastDrawAction(action);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        // Send cursor position to server
+        gui.getCanvas().setCursorListener(pos -> {
+            try {
+                getServerRef().broadcastCursorPosition(pos);
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -3,6 +3,7 @@ package com.example.gui;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
+import com.example.shared.CursorPosition;
 import com.example.shared.DrawAction;
 import com.example.shared.Tool;
 
@@ -12,25 +13,32 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class WhiteBoardCanvas extends JPanel {
 
     private Consumer<DrawAction> drawListener;
+    private Consumer<CursorPosition> cursorListener;
 
     private BufferedImage canvasImage;
     private Graphics2D g2d;
     private int prevX, prevY;
     private Tool currentTool;
 
-    // Line tool fields
+    // Draw tool fields
     private int startX, startY;
     private int currentX, currentY;
     private int mouseX, mouseY;
     private boolean drawing = false;
-
     private int drawStrokeSize = 2;
     private int eraserStrokeSize = 10;
+
+    // Username bubble fields
+    private long lastSentTime = 0;
+    private static final int THROTTLE_MS = 50;
+    private final Map<String, Point> cursors = new ConcurrentHashMap<>();
 
     private String username;
 
@@ -87,10 +95,29 @@ public class WhiteBoardCanvas extends JPanel {
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
+                // FIXME align with paint fn
                 mouseX = e.getX();
                 mouseY = e.getY();
                 // Draw the username bubble
                 repaint();
+                long now = System.currentTimeMillis();
+                if (now - lastSentTime >= THROTTLE_MS) {
+                    lastSentTime = now;
+
+                    // Create cursor update
+                    CursorPosition pos = new CursorPosition(username, e.getX(), e.getY());
+
+                    // Send to server asynchronously
+                    new Thread(() -> {
+                        try {
+                            // client.getServerRef().broadcastCursorPosition(pos);
+                            if (cursorListener != null)
+                                cursorListener.accept(pos);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }).start();
+                }
             }
 
             @Override
@@ -170,7 +197,16 @@ public class WhiteBoardCanvas extends JPanel {
         g.drawImage(canvasImage, 0, 0, null);
 
         // Display username bubble
-        drawUsernameBubble(g, username, mouseX, mouseY);
+        // drawUsernameBubble(g, username, mouseX, mouseY);
+        // g.setColor(new Color(0, 0, 0, 100));
+        // TODO improvement: make a different random color associated to each user
+        for (var entry : cursors.entrySet()) {
+            // Point p = entry.getValue();
+            // g.fillOval(p.x - 5, p.y - 5, 10, 10);
+            // g.setColor(Color.WHITE);
+            // g.drawString(entry.getKey(), p.x + 10, p.y);
+            drawUsernameBubble(g, entry.getKey(), mouseX, mouseY);
+        }
 
         // === Local preview for drawing tools ===
 
@@ -207,6 +243,11 @@ public class WhiteBoardCanvas extends JPanel {
         repaint();
     }
 
+    public void updateCursorPosition(CursorPosition pos) {
+        cursors.put(pos.username, new Point(pos.x, pos.y));
+        repaint();
+    }
+
     // TODO update the client based on the server broadcast
     // FIXME add remote methods
     // public void drawRemoteLine(int x1, int y1, int x2, int y2) {
@@ -216,6 +257,10 @@ public class WhiteBoardCanvas extends JPanel {
 
     public void setDrawListener(Consumer<DrawAction> listener) {
         this.drawListener = listener;
+    }
+
+    public void setCursorListener(Consumer<CursorPosition> listener) {
+        this.cursorListener = listener;
     }
 
     public void setDrawingColor(Color newColor) {

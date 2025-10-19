@@ -15,4 +15,5 @@ public interface WhiteBoardServerInterface extends Remote {
     void broadcastDrawAction(DrawAction action) throws RemoteException;
     byte[] getCanvasSnapshot() throws RemoteException;
     ArrayList<ChatMessage> getChatHistory() throws RemoteException;
+    void broadcastCursorPosition(CursorPosition position) throws RemoteException;
 }

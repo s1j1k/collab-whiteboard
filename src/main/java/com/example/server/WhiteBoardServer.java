@@ -21,6 +21,7 @@ import javax.swing.SwingUtilities;
 
 import com.example.gui.ServerGUI;
 import com.example.shared.ChatMessage;
+import com.example.shared.CursorPosition;
 import com.example.shared.DrawAction;
 import com.example.shared.WhiteBoardClientInterface;
 import com.example.shared.WhiteBoardServerInterface;
@@ -38,7 +39,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         super();
         this.port = port;
         this.username = username;
-        }
+    }
 
     @Override
     public synchronized boolean registerClient(String username, WhiteBoardClientInterface client)
@@ -117,6 +118,17 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
             return baos.toByteArray();
         } catch (IOException e) {
             throw new RemoteException("Failed to encode canvas", e);
+        }
+    }
+
+    @Override
+    public synchronized void broadcastCursorPosition(CursorPosition pos) throws RemoteException {
+        for (WhiteBoardClientInterface c : connectedClients.values()) {
+            try {
+                c.updateCursorPosition(pos);
+            } catch (RemoteException e) {
+                System.err.println("Failed to update cursor for client: " + e.getMessage());
+            }
         }
     }
 
