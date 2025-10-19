@@ -49,7 +49,9 @@ public abstract class AbstractWhiteBoardGUI extends JFrame {
         usersButton.setToolTipText("Show connected users");
         usersButton.setFocusable(false);
         usersButton.addActionListener(e -> toggleUserPanel());
-        toolbarPanel.add(usersButton);
+        // Add to toolbar
+        // FIXME test this works
+        toolbar.add(usersButton);
 
         // === Users Panel ===
         userListModel = new DefaultListModel<>();
