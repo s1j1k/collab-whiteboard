@@ -108,15 +108,16 @@ public class WhiteBoardCanvas extends JPanel {
                     CursorPosition pos = new CursorPosition(username, e.getX(), e.getY());
 
                     // Send to server asynchronously
-                    new Thread(() -> {
-                        try {
-                            // client.getServerRef().broadcastCursorPosition(pos);
-                            if (cursorListener != null)
-                                cursorListener.accept(pos);
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }).start();
+                    cursorListener.accept(pos);
+                    // new Thread(() -> {
+                    //     try {
+                    //         // client.getServerRef().broadcastCursorPosition(pos);
+                    //         if (cursorListener != null)
+                    //             cursorListener.accept(pos);
+                    //     } catch (Exception ex) {
+                    //         ex.printStackTrace();
+                    //     }
+                    // }).start();
                 }
             }
 
@@ -197,15 +198,15 @@ public class WhiteBoardCanvas extends JPanel {
         g.drawImage(canvasImage, 0, 0, null);
 
         // Display username bubble
-        // drawUsernameBubble(g, username, mouseX, mouseY);
+        drawUsernameBubble(g, username, mouseX, mouseY);
         // g.setColor(new Color(0, 0, 0, 100));
         // TODO improvement: make a different random color associated to each user
         for (var entry : cursors.entrySet()) {
-            // Point p = entry.getValue();
+            Point p = entry.getValue();
             // g.fillOval(p.x - 5, p.y - 5, 10, 10);
             // g.setColor(Color.WHITE);
             // g.drawString(entry.getKey(), p.x + 10, p.y);
-            drawUsernameBubble(g, entry.getKey(), mouseX, mouseY);
+            drawUsernameBubble(g, entry.getKey(), p.x, p.y);
         }
 
         // === Local preview for drawing tools ===
@@ -246,6 +247,8 @@ public class WhiteBoardCanvas extends JPanel {
     public void updateCursorPosition(CursorPosition pos) {
         cursors.put(pos.username, new Point(pos.x, pos.y));
         repaint();
+        // FIXME debugging
+        System.out.println("Cursor position updated: "  + cursors);
     }
 
     // TODO update the client based on the server broadcast
