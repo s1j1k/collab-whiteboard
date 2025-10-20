@@ -11,14 +11,15 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
+import com.example.server.WhiteBoardServer;
 import com.example.shared.WhiteBoardServerInterface;
 
 public class ServerGUI extends AbstractWhiteBoardGUI {
 
-    public ServerGUI(WhiteBoardServerInterface serverRef) {
+    public ServerGUI(WhiteBoardServer serverRef) {
         super("Server Whiteboard");
         setJMenuBar(createMenuBar());
-        userList.setCellRenderer(new UserListCellRenderer(true));
+        userList.setCellRenderer(new UserListCellRenderer(true, serverRef.getUsername()));
 
         userList.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override

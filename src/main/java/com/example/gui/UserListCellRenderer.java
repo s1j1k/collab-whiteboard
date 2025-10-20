@@ -7,6 +7,7 @@ public class UserListCellRenderer extends JPanel implements ListCellRenderer<Str
     private final JLabel nameLabel = new JLabel();
     private final JLabel deleteIcon = new JLabel();
     private final boolean showKickIcons;
+    private String hostUsername;
 
     public UserListCellRenderer(boolean showKickIcons) {
         this.showKickIcons = showKickIcons;
@@ -15,10 +16,15 @@ public class UserListCellRenderer extends JPanel implements ListCellRenderer<Str
         add(nameLabel, BorderLayout.CENTER);
 
         if (showKickIcons) {
-            deleteIcon.setIcon(new ImageIcon(getClass().getResource("/icons/delete.png")));
+            deleteIcon.setIcon(IconUtils.loadScaledIcon("/icons/delete.png", 24, 24));
             add(deleteIcon, BorderLayout.EAST);
         }
         setOpaque(true);
+    }
+
+    public UserListCellRenderer(boolean showKickIcons, String hostUsername) {
+        this(showKickIcons);
+        this.hostUsername = hostUsername;
     }
 
     @Override
@@ -33,6 +39,14 @@ public class UserListCellRenderer extends JPanel implements ListCellRenderer<Str
         } else {
             setBackground(Color.WHITE);
         }
+
+        // Only show ❌ for non-host users (if we're the server)
+        if (showKickIcons && !value.equals(hostUsername)) {
+            deleteIcon.setVisible(true);
+        } else {
+            deleteIcon.setVisible(false);
+        }
+
 
         return this;
     }

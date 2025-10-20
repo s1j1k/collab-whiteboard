@@ -140,7 +140,10 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     }
 
     private void broadcastUserList() {
-        UserListUpdate update = new UserListUpdate(new ArrayList<>(connectedClients.keySet()));
+        ArrayList<String> fullUsersList = new ArrayList<>(connectedClients.keySet());
+        // Add server owner's username to client usernames
+        fullUsersList.addFirst(username);
+        UserListUpdate update = new UserListUpdate(fullUsersList);
         // Update server gui
         SwingUtilities.invokeLater(() -> gui.updateUserList(update.getUsernames()));
         // Update clients gui
@@ -166,6 +169,10 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         }
     }
 
+    public String getUsername() {
+        return username;
+    }
+
     public void start() {
         try {
             // Create and bind the remote object in the RMI registry
@@ -176,8 +183,12 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
             // Launch Server GUI safely on the Event Dispatch Thread
             SwingUtilities.invokeLater(() -> gui.setVisible(true));
 
+            // Display username in users list (Even if nobody joined yet)
+            broadcastUserList();
+
             // FIXME add this to initialization/constructor of the GUI
             gui.getCanvas().setUsername(username);
+            
 
             // Whenever server draws locally, send it to all of the clients
             gui.getCanvas().setDrawListener(action -> {
