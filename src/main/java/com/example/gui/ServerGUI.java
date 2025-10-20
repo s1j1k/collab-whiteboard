@@ -1,5 +1,6 @@
 package com.example.gui;
 
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
@@ -7,16 +8,49 @@ import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+
+import com.example.shared.WhiteBoardServerInterface;
 
 public class ServerGUI extends AbstractWhiteBoardGUI {
 
-    // GUI Components
-    // WhiteBoardCanvas canvas = new WhiteBoardCanvas(500, 500);
-
-    public ServerGUI() {
+    public ServerGUI(WhiteBoardServerInterface serverRef) {
         super("Server Whiteboard");
         setJMenuBar(createMenuBar());
+        userList.setCellRenderer(new UserListCellRenderer(true));
+
+        userList.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                int index = userList.locationToIndex(e.getPoint());
+                if (index != -1) {
+                    Rectangle cellBounds = userList.getCellBounds(index, index);
+                    int clickX = e.getX() - cellBounds.x;
+
+                    // Roughly detect click near right side (where delete icon is)
+                    if (clickX > cellBounds.width - 30) {
+                        String username = userListModel.get(index);
+                        int confirm = JOptionPane.showConfirmDialog(
+                                userList,
+                                "Kick out user: " + username + "?",
+                                "Confirm Kick",
+                                JOptionPane.YES_NO_OPTION);
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            try {
+                                serverRef.kickUser(username);
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                                JOptionPane.showMessageDialog(userList,
+                                        "Failed to remove user: " + ex.getMessage(),
+                                        "Error", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
     }
 
     // @Override

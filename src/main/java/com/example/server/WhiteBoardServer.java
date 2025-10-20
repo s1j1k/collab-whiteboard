@@ -29,7 +29,7 @@ import com.example.shared.WhiteBoardServerInterface;
 
 public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardServerInterface {
     // FIXME take username as a param
-    ServerGUI gui = new ServerGUI();
+    ServerGUI gui = new ServerGUI(this);
     private final Map<String, WhiteBoardClientInterface> connectedClients = new ConcurrentHashMap<>();
     private List<ChatMessage> chatHistory = new ArrayList<ChatMessage>();
     // private List<DrawAction> drawHistory = new ArrayList<DrawAction>();
@@ -140,15 +140,31 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     }
 
     private void broadcastUserList() {
-    UserListUpdate update = new UserListUpdate(new ArrayList<>(connectedClients.keySet()));
-    for (WhiteBoardClientInterface c : connectedClients.values()) {
-        try {
-            c.receiveUserListUpdate(update);
-        } catch (RemoteException e) {
-            System.err.println("Failed to update user list: " + e.getMessage());
+        UserListUpdate update = new UserListUpdate(new ArrayList<>(connectedClients.keySet()));
+        // Update server gui
+        SwingUtilities.invokeLater(() -> gui.updateUserList(update.getUsernames()));
+        // Update clients gui
+        for (WhiteBoardClientInterface c : connectedClients.values()) {
+            try {
+                c.receiveUserListUpdate(update);
+            } catch (RemoteException e) {
+                System.err.println("Failed to update user list: " + e.getMessage());
+            }
         }
     }
-}
+
+    @Override
+    public synchronized void kickUser(String username) throws RemoteException {
+        WhiteBoardClientInterface client = connectedClients.remove(username);
+        if (client != null) {
+            try {
+                client.kickedFromServer(); // optional client callback
+            } catch (RemoteException e) {
+                System.err.println("Error notifying kicked client: " + e.getMessage());
+            }
+            broadcastUserList();
+        }
+    }
 
     public void start() {
         try {
@@ -180,7 +196,19 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
                     e.printStackTrace();
                 }
             });
-            
+
+            // Send messages to clients
+            gui.getChatPanel().setChatListener(message -> {
+                // send message to server via RMI
+                System.out.println("Sending: " + message);
+                try {
+                    sendChatMessage(new ChatMessage(username, message));
+                } catch (RemoteException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            });
+
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();

@@ -15,4 +15,7 @@ public interface WhiteBoardClientInterface extends Remote {
     void updateCursorPosition(CursorPosition position) throws RemoteException;
 
     void receiveUserListUpdate(UserListUpdate update) throws RemoteException;
+
+    void kickedFromServer() throws RemoteException;
+
 }

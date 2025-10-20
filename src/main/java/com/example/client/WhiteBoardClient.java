@@ -55,6 +55,16 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         SwingUtilities.invokeLater(() -> gui.updateUserList(update.getUsernames()));
     }
 
+    @Override
+    public void kickedFromServer() throws RemoteException {
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(null,
+                    "You’ve been removed from the whiteboard by the host.",
+                    "Removed", JOptionPane.WARNING_MESSAGE);
+            System.exit(0);
+        });
+    }
+
     public void connect() throws Exception {
         Registry registry = LocateRegistry.getRegistry(host, port);
         serverRef = (WhiteBoardServerInterface) registry.lookup("WhiteBoardService");

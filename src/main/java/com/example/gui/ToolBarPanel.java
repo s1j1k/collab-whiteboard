@@ -115,6 +115,7 @@ public class ToolBarPanel extends JPanel {
 
         // === Color Button ===
         colorButton = new JButton(IconUtils.loadScaledIcon("/icons/colors.png", 24, 24));
+        colorButton.setToolTipText("Color");
         colorButton.setFocusable(false);
         colorButton.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4)); // keep spacing
         colorButton.setContentAreaFilled(false); // remove default background fill
@@ -142,12 +143,13 @@ public class ToolBarPanel extends JPanel {
 
         // === Add to layout ===
         leftPanel.add(toolBar);
-        rightPanel.add(strokeSizeSliderPanel);
-        rightPanel.add(strokePreview);
-        rightPanel.add(colorButton);
+        // TODO add a little space here
+        leftPanel.add(strokeSizeSliderPanel);
+        leftPanel.add(strokePreview);
+        leftPanel.add(colorButton);
         // === Add both to main panel ===
         add(leftPanel, BorderLayout.WEST);
-        add(rightPanel, BorderLayout.EAST);
+        // add(rightPanel, BorderLayout.CENTER);
 
         // === TODOs (kept from your version) ===
         // TODO Shapes: your whiteboard should at least support line, triangle, circle,

@@ -11,10 +11,10 @@ public abstract class AbstractWhiteBoardGUI extends JFrame {
     protected ChatPanel chatPanel;
 
     // User list filds
+    private JToggleButton usersButton;
     protected JList<String> userList;
     protected DefaultListModel<String> userListModel;
     protected JScrollPane userScrollPane;
-    protected JButton usersButton;
 
     public AbstractWhiteBoardGUI(String title) {
         super(title);
@@ -36,22 +36,19 @@ public abstract class AbstractWhiteBoardGUI extends JFrame {
         add(canvas, BorderLayout.CENTER);
 
         chatPanel = new ChatPanel();
-        // chatPanel.setChatListener(message -> {
-        // // send message to server via RMI later
-        // System.out.println("Sending: " + message);
-        // });
+        add(chatPanel, BorderLayout.WEST);
 
-        // Add it to your layout (e.g., right side of canvas)
-        add(chatPanel, BorderLayout.EAST);
 
         // === Users Button ===
-        usersButton = new JButton(IconUtils.loadScaledIcon("/icons/users.png", 24, 24));
+        usersButton = new JToggleButton(IconUtils.loadScaledIcon("/icons/users.png", 24, 24));
         usersButton.setToolTipText("Show connected users");
-        usersButton.setFocusable(false);
         usersButton.addActionListener(e -> toggleUserPanel());
-        // Add to toolbar
-        // FIXME test this works
-        toolbar.add(usersButton);
+        usersButton.setFocusable(false);
+        usersButton.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4)); // keep spacing
+        usersButton.setContentAreaFilled(false); // remove default background fill
+        usersButton.setOpaque(false);
+        usersButton.setRolloverEnabled(true); // ensure hover effect works
+        toolbar.add(usersButton, BorderLayout.EAST);
 
         // === Users Panel ===
         userListModel = new DefaultListModel<>();
@@ -62,7 +59,7 @@ public abstract class AbstractWhiteBoardGUI extends JFrame {
         userScrollPane.setVisible(false);
         add(userScrollPane, BorderLayout.EAST);
 
-        // Modern feel UI with Flatlaf
+        // Modern UI with Flatlaf
         userList.putClientProperty("JList.roundRectSelection", true);
         userList.putClientProperty("JList.showCellFocusIndicator", false);
 

@@ -25,4 +25,6 @@ public interface WhiteBoardServerInterface extends Remote {
 
     // void broadcastUserList() throws RemoteException;
 
+    void kickUser(String username) throws RemoteException;
+
 }
