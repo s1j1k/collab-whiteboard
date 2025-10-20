@@ -18,4 +18,6 @@ public interface WhiteBoardClientInterface extends Remote {
 
     void kickedFromServer() throws RemoteException;
 
+    void receiveCanvasImage(byte[] imageData) throws RemoteException;
+
 }

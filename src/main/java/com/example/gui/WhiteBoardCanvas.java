@@ -233,7 +233,6 @@ public class WhiteBoardCanvas extends JPanel {
         }
     }
 
-    // FIXME this isn't used / implemented
     public void clear() {
         g2d.setColor(Color.WHITE);
         g2d.fillRect(0, 0, getWidth(), getHeight());
@@ -405,28 +404,41 @@ public class WhiteBoardCanvas extends JPanel {
     // FIXME this scales the image, does it stretch it if the server GUI gets
     // stretched?
     public void loadFromFile(File file) throws IOException {
-        BufferedImage backgroundImage = ImageIO.read(file);
-        g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
-        repaint();
+        // BufferedImage backgroundImage = ImageIO.read(file);
+        // g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
+        // repaint();
+        // FIXME move this to the initialization part ?
+
+        canvasImage = ImageIO.read(file);
+
+
+            Stroke previousStroke = g2d.getStroke();
+            Color previousColor = g2d.getColor();
+            g2d.dispose();
+            g2d = canvasImage.createGraphics();
+            g2d.setColor(previousColor);
+            g2d.setStroke(previousStroke);
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     }
 
     public void saveCanvasToFile(File file) throws IOException {
-        BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = image.createGraphics();
-        paint(g2);
-        g2.dispose();
-        ImageIO.write(image, "png", file);
+        // BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        // Graphics2D g2 = image.createGraphics();
+        // paint(g2);
+        // g2.dispose();
+        ImageIO.write(canvasImage, "png", file);
     }
 
     public void loadCanvasImage(byte[] imageData) {
         try {
             canvasImage = ImageIO.read(new ByteArrayInputStream(imageData));
             // FIXME move this to the initialization part ?
+            Stroke previousStroke = g2d.getStroke();
+            Color previousColor = g2d.getColor();
             g2d.dispose();
             g2d = canvasImage.createGraphics();
-            g2d.setColor(Color.BLACK);
-            // Make the stroke have circular ends
-            g2d.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2d.setColor(previousColor);
+            g2d.setStroke(previousStroke);
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         } catch (IOException e) {
             e.printStackTrace();

@@ -27,4 +27,6 @@ public interface WhiteBoardServerInterface extends Remote {
 
     void kickUser(String username) throws RemoteException;
 
+    // void broadcastCanvasImage(byte[] ) throws RemoteException;
+
 }

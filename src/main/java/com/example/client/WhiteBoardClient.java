@@ -65,6 +65,14 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         });
     }
 
+    // TODO WRITE lock - server side / client side (?)
+    @Override
+    public void receiveCanvasImage(byte[] imageData) throws RemoteException {
+        SwingUtilities.invokeLater(() -> {
+                gui.getCanvas().loadCanvasImage(imageData);
+            });
+    }
+
     public void connect() throws Exception {
         Registry registry = LocateRegistry.getRegistry(host, port);
         serverRef = (WhiteBoardServerInterface) registry.lookup("WhiteBoardService");

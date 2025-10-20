@@ -3,6 +3,9 @@ package com.example.gui;
 import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.IOException;
+import java.rmi.RemoteException;
 
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
@@ -10,16 +13,24 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.example.server.WhiteBoardServer;
 import com.example.shared.WhiteBoardServerInterface;
 
 public class ServerGUI extends AbstractWhiteBoardGUI {
 
-    public ServerGUI(WhiteBoardServer serverRef) {
+    // Default file name
+    private File whiteboardFile = new File("Whiteboard.png");
+
+    WhiteBoardServer server;
+
+    public ServerGUI(WhiteBoardServer server) {
         super("Server Whiteboard");
+
+        this.server = server;
         setJMenuBar(createMenuBar());
-        userList.setCellRenderer(new UserListCellRenderer(true, serverRef.getUsername()));
+        userList.setCellRenderer(new UserListCellRenderer(true, server.getUsername()));
 
         userList.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -39,7 +50,7 @@ public class ServerGUI extends AbstractWhiteBoardGUI {
                                 JOptionPane.YES_NO_OPTION);
                         if (confirm == JOptionPane.YES_OPTION) {
                             try {
-                                serverRef.kickUser(username);
+                                server.kickUser(username);
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                                 JOptionPane.showMessageDialog(userList,
@@ -104,26 +115,68 @@ public class ServerGUI extends AbstractWhiteBoardGUI {
     private void onNewFile() {
         System.out.println("[Server] New whiteboard created.");
         // TODO: clear canvas, broadcast reset to clients
+
+        // Reset to default file name
+        whiteboardFile = new File("Whiteboard.png");
+
+        canvas.clear();
+
+
+        try {
+            server.broadcastCanvasImage();
+        } catch (RemoteException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     private void onOpenFile() {
         System.out.println("[Server] Opening existing whiteboard...");
         JFileChooser chooser = new JFileChooser();
+    
+        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
+                "Image Files (JPG, JPEG, PNG, GIF)", "jpg", "jpeg", "png", "gif");
+         chooser.setFileFilter(imageFilter);
+
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             // TODO: load saved whiteboard
+            whiteboardFile = chooser.getSelectedFile();
+            try {
+                canvas.loadFromFile(whiteboardFile);
+                server.broadcastCanvasImage();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 
     private void onSaveFile() {
         System.out.println("[Server] Saving current whiteboard...");
         // TODO: serialize whiteboard state
+        try {
+            canvas.saveCanvasToFile(whiteboardFile);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     private void onSaveAsFile() {
         System.out.println("[Server] Saving whiteboard as...");
         JFileChooser chooser = new JFileChooser();
+        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
+                "Image Files (JPG, JPEG, PNG, GIF)", "jpg", "jpeg", "png", "gif");
+         chooser.setFileFilter(imageFilter);
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             // TODO: write to selected file
+            whiteboardFile = chooser.getSelectedFile();
+            try {
+                canvas.saveCanvasToFile(whiteboardFile);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 
