@@ -440,6 +440,8 @@ public class WhiteBoardCanvas extends JPanel {
             g2d.setColor(previousColor);
             g2d.setStroke(previousStroke);
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            // Force refresh
+            repaint();
         } catch (IOException e) {
             e.printStackTrace();
         }

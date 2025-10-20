@@ -42,4 +42,6 @@ failsafe-reports/
 .mvn/wrapper/
 mvnw
 mvnw.cmd
-Whiteboard.png
+
+# Image filess
+*.png
