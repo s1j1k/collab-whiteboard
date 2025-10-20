@@ -170,6 +170,22 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         }
     }
 
+    // @Override
+    // FIXME write lck (?)
+    // what if we drraw straight after?
+    public void broadcastCanvasImage() throws RemoteException {
+        // Send out updated canvas
+        // Update clients gui
+        byte[] imageData = getCanvasSnapshot();
+        for (WhiteBoardClientInterface c : connectedClients.values()) {
+            try {
+                c.receiveCanvasImage(imageData);
+            } catch (RemoteException e) {
+                System.err.println("Failed to update user list: " + e.getMessage());
+            }
+        }
+    }
+
     public String getUsername() {
         return hostUsername;
     }
