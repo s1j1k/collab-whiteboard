@@ -29,17 +29,18 @@ import com.example.shared.WhiteBoardServerInterface;
 
 public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardServerInterface {
     // FIXME take username as a param
-    ServerGUI gui = new ServerGUI(this);
+    ServerGUI gui;
     private final Map<String, WhiteBoardClientInterface> connectedClients = new ConcurrentHashMap<>();
     private List<ChatMessage> chatHistory = new ArrayList<ChatMessage>();
     // private List<DrawAction> drawHistory = new ArrayList<DrawAction>();
     private int port;
-    private String username;
+    private String hostUsername;
 
-    protected WhiteBoardServer(int port, String username) throws RemoteException {
+    protected WhiteBoardServer(int port, String hostUsername) throws RemoteException {
         super();
         this.port = port;
-        this.username = username;
+        this.hostUsername = hostUsername;
+        gui = new ServerGUI(this); // Ensured username is set
     }
 
     @Override
@@ -51,7 +52,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
             return false;
         }
 
-        if (connectedClients.containsKey(username) || username.equals(this.username)) {
+        if (connectedClients.containsKey(username) || username.equals(hostUsername)) {
             System.out.println("Registration failed: username already exists");
             return false;
         }
@@ -142,7 +143,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     private void broadcastUserList() {
         ArrayList<String> fullUsersList = new ArrayList<>(connectedClients.keySet());
         // Add server owner's username to client usernames
-        fullUsersList.addFirst(username);
+        fullUsersList.addFirst(hostUsername);
         UserListUpdate update = new UserListUpdate(fullUsersList);
         // Update server gui
         SwingUtilities.invokeLater(() -> gui.updateUserList(update.getUsernames()));
@@ -170,7 +171,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     }
 
     public String getUsername() {
-        return username;
+        return hostUsername;
     }
 
     public void start() {
@@ -187,7 +188,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
             broadcastUserList();
 
             // FIXME add this to initialization/constructor of the GUI
-            gui.getCanvas().setUsername(username);
+            gui.getCanvas().setUsername(hostUsername);
             
 
             // Whenever server draws locally, send it to all of the clients
@@ -213,7 +214,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
                 // send message to server via RMI
                 System.out.println("Sending: " + message);
                 try {
-                    sendChatMessage(new ChatMessage(username, message));
+                    sendChatMessage(new ChatMessage(hostUsername, message));
                 } catch (RemoteException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
