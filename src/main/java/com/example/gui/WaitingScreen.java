@@ -26,7 +26,8 @@ public class WaitingScreen extends JFrame {
         setResizable(false);
 
         JPanel content = new JPanel(new BorderLayout());
-        content.setBackground(UIManager.getColor("Panel.background"));
+        // content.setBackground(UIManager.getColor("Panel.background"));
+        content.setBackground(Color.WHITE);
 
         // --- Title ---
         JLabel title = new JLabel("Join Whiteboard", SwingConstants.CENTER);
@@ -48,11 +49,9 @@ public class WaitingScreen extends JFrame {
         messageLabel.setFont(messageLabel.getFont().deriveFont(16f));
         messageLabel.setForeground(UIManager.getColor("Label.foreground"));
 
-        spinnerLabel = new JLabel("", SwingConstants.CENTER);
+        spinnerLabel = new JLabel(new ImageIcon(getClass().getResource("/spinner.gif")), SwingConstants.CENTER);
         spinnerLabel.setVisible(false);
 
-        // You can later set a custom animated spinner icon:
-        // spinnerLabel.setIcon(new ImageIcon("resources/spinner.gif"));
 
         // --- Center layout ---
         JPanel centerPanel = new JPanel(new GridBagLayout());
@@ -89,6 +88,7 @@ public class WaitingScreen extends JFrame {
     public void showWaitingState() {
         usernameField.setEnabled(false);
         connectButton.setEnabled(false);
+        messageLabel.setForeground(Color.BLACK);
         messageLabel.setText("Waiting for server approval...");
         spinnerLabel.setVisible(true);
     }

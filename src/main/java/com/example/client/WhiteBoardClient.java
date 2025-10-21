@@ -112,7 +112,6 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
 
     public boolean register(String username, WhiteBoardClientInterface clientStub) throws RemoteException {
         this.username = username;
-        this.clientStub = clientStub;
         return serverRef.registerClient(username, clientStub);
     }
 
@@ -147,7 +146,7 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
 
             // Call server RMI method
             try {
-                getServerRef().registerClient(username, getClientStub());
+                register(username, getClientStub());
             } catch (RemoteException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();

@@ -27,18 +27,23 @@ public class ChatPanel extends JPanel {
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createTitledBorder("Chat"));
 
+        // setBackground(Color.WHITE);
+
         // === Chat display area ===
         chatArea = new JTextArea();
         chatArea.setEditable(false);
-        chatArea.setLineWrap(true);
-        chatArea.setWrapStyleWord(true);
+        chatArea.setLineWrap(false);
+        // chatArea.setWrapStyleWord(true);
+        // chatArea.setBackground(Color.WHITE);
 
         JScrollPane scrollPane = new JScrollPane(chatArea);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         add(scrollPane, BorderLayout.CENTER);
+        // scrollPane.setBackground(Color.WHITE);
 
         // === Input area ===
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
+        // inputPanel.setBackground(Color.WHITE);
         inputField = new JTextField(10);
         inputField.putClientProperty("JComponent.roundRect", true);
 
