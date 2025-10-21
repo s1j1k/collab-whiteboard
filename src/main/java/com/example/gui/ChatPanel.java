@@ -39,8 +39,11 @@ public class ChatPanel extends JPanel {
 
         // === Input area ===
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
-        inputField = new JTextField();
+        inputField = new JTextField(10);
+        inputField.putClientProperty("JComponent.roundRect", true);
+
         sendButton = new JButton("Send");
+        sendButton.putClientProperty("JButton.buttonType", "roundRect");
 
         inputPanel.add(inputField, BorderLayout.CENTER);
         inputPanel.add(sendButton, BorderLayout.EAST);

@@ -135,7 +135,8 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     /**
      * Defines what happens when the user clicks "Connect"
      */
-    private static ActionListener onConnect(java.util.function.Consumer<WaitingScreen> onSuccess) {
+    // FIXME does it need to be static?
+    private ActionListener onConnect(java.util.function.Consumer<WaitingScreen> onSuccess) {
         return e -> {
             JButton sourceButton = (JButton) e.getSource();
             WaitingScreen waitingScreen = (WaitingScreen) SwingUtilities.getWindowAncestor(sourceButton);
@@ -147,6 +148,15 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
             }
 
             waitingScreen.showWaitingState();
+
+            // Call server RMI method
+            try {
+                getServerRef().registerClient(username, getClientStub());
+            } catch (RemoteException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+
         };
     }
 
