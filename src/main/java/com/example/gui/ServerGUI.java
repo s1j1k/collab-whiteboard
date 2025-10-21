@@ -81,7 +81,7 @@ public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListe
             if (confirm == JOptionPane.YES_OPTION) {
                 server.approveClient(username);
             } else {
-                server.denyClient(username);
+                server.denyClient(username, "Denied by whiteboard host.");
             }
         });
     }

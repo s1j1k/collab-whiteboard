@@ -8,6 +8,9 @@ import java.rmi.RemoteException;
  */
 
 public interface WhiteBoardClientInterface extends Remote {
+    void onRegistrationApproved() throws RemoteException;
+    void onRegistrationRejected(String reason) throws RemoteException;
+    
     void receiveDrawAction(DrawAction action) throws RemoteException;
 
     void receiveChatMessage(ChatMessage message) throws RemoteException;
@@ -19,5 +22,7 @@ public interface WhiteBoardClientInterface extends Remote {
     void kickedFromServer() throws RemoteException;
 
     void receiveCanvasImage(byte[] imageData) throws RemoteException;
+
+
 
 }

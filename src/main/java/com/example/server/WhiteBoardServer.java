@@ -54,6 +54,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
             return false;
         }
 
+        // FIXME tell user when it gets denied for this reason
         if (connectedClients.containsKey(username) || pendingClients.containsKey(username)) {
             return false;
         }
@@ -73,13 +74,25 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     public void approveClient(String username) {
     WhiteBoardClientInterface client = pendingClients.remove(username);
     if (client != null) {
+        try {
+            client.onRegistrationApproved();
+        } catch (RemoteException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         connectedClients.put(username, client);
         broadcastUserList();
         System.out.println("Approved client: " + username);
     }
 }
 
-public void denyClient(String username) {
+public void denyClient(String username, String reason) {
+    try {
+        pendingClients.get(username).onRegistrationRejected(reason);
+    } catch (RemoteException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
     pendingClients.remove(username);
     System.out.println("Denied client: " + username);
 }

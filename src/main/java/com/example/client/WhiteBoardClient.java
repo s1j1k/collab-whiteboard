@@ -7,11 +7,14 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.awt.event.ActionListener;
 
+import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import com.example.gui.ClientGUI;
+import com.example.gui.WaitingScreen;
 import com.example.shared.ChatMessage;
 import com.example.shared.CursorPosition;
 import com.example.shared.DrawAction;
@@ -24,7 +27,8 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     private String host;
     private int port;
     private String username;
-    private ClientGUI gui = new ClientGUI();
+    private ClientGUI gui;
+    WaitingScreen waitingScreen;
     private WhiteBoardServerInterface serverRef;
     private WhiteBoardClientInterface clientStub;
 
@@ -33,6 +37,38 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         this.host = host;
         this.port = port;
         this.clientStub = this;
+
+        gui = new ClientGUI();
+
+        waitingScreen = new WaitingScreen(onConnect(waitingScreenRef -> {
+        // Close the waiting screen and launch main GUI once connected
+        waitingScreenRef.dispose();
+        gui.setVisible(true);
+    }));
+    }
+
+    @Override
+    public void onRegistrationApproved() throws RemoteException {
+        System.out.println("Approved by server!");
+        SwingUtilities.invokeLater(() -> {
+            // close waiting screen and launch GUI
+            if (waitingScreen != null) {
+                waitingScreen.dispose();
+            }
+            launchClientGui();
+        });
+    }
+
+    @Override
+    public void onRegistrationRejected(String reason) throws RemoteException {
+        System.out.println("Rejected by server: " + reason);
+        SwingUtilities.invokeLater(() -> {
+            if (waitingScreen != null) {
+                waitingScreen.showRejection("Rejected: " + reason);
+            } else {
+                JOptionPane.showMessageDialog(null, "Rejected: " + reason);
+            }
+        });
     }
 
     @Override
@@ -69,8 +105,8 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     @Override
     public void receiveCanvasImage(byte[] imageData) throws RemoteException {
         SwingUtilities.invokeLater(() -> {
-                gui.getCanvas().loadCanvasImage(imageData);
-            });
+            gui.getCanvas().loadCanvasImage(imageData);
+        });
     }
 
     public void connect() throws Exception {
@@ -94,6 +130,32 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
 
     public String getUsername() {
         return username;
+    }
+
+    /**
+     * Defines what happens when the user clicks "Connect"
+     */
+    private static ActionListener onConnect(java.util.function.Consumer<WaitingScreen> onSuccess) {
+        return e -> {
+            JButton sourceButton = (JButton) e.getSource();
+            WaitingScreen waitingScreen = (WaitingScreen) SwingUtilities.getWindowAncestor(sourceButton);
+
+            String username = waitingScreen.getUsername();
+            if (username.isEmpty()) {
+                JOptionPane.showMessageDialog(waitingScreen, "Please enter a username.");
+                return;
+            }
+
+            waitingScreen.showWaitingState();
+        };
+    }
+
+    public void launchWaitingScreen() {
+         // Launch Waiting Screen safely on the Event Dispatch Thread
+        SwingUtilities.invokeLater(() -> {
+            waitingScreen.setVisible(true);
+        });
+        
     }
 
     public void launchClientGui() {
