@@ -40,11 +40,7 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
 
         gui = new ClientGUI();
 
-        waitingScreen = new WaitingScreen(onConnect(waitingScreenRef -> {
-        // Close the waiting screen and launch main GUI once connected
-        waitingScreenRef.dispose();
-        gui.setVisible(true);
-    }));
+        waitingScreen = new WaitingScreen(onConnect());
     }
 
     @Override
@@ -136,7 +132,7 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
      * Defines what happens when the user clicks "Connect"
      */
     // FIXME does it need to be static?
-    private ActionListener onConnect(java.util.function.Consumer<WaitingScreen> onSuccess) {
+    private ActionListener onConnect() {
         return e -> {
             JButton sourceButton = (JButton) e.getSource();
             WaitingScreen waitingScreen = (WaitingScreen) SwingUtilities.getWindowAncestor(sourceButton);

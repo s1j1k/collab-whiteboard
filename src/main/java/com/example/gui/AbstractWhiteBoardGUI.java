@@ -30,6 +30,7 @@ public abstract class AbstractWhiteBoardGUI extends JFrame {
         setLayout(new BorderLayout());
 
         canvas = new WhiteBoardCanvas(800, 600);
+        // canvas.setUsername(username);
         toolbar = new ToolBarPanel(canvas);
 
         add(toolbar, BorderLayout.NORTH);
