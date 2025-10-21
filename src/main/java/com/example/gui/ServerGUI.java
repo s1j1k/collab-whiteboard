@@ -13,12 +13,13 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.example.server.WhiteBoardServer;
-import com.example.shared.WhiteBoardServerInterface;
+import com.example.shared.ServerEventListener;
 
-public class ServerGUI extends AbstractWhiteBoardGUI {
+public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListener {
 
     // Default file name
     private File whiteboardFile = new File("Whiteboard.png");
@@ -29,6 +30,8 @@ public class ServerGUI extends AbstractWhiteBoardGUI {
         super("Server Whiteboard");
 
         this.server = server;
+        server.setEventListener(this);
+
         setJMenuBar(createMenuBar());
         userList.setCellRenderer(new UserListCellRenderer(true, server.getUsername()));
 
@@ -40,7 +43,7 @@ public class ServerGUI extends AbstractWhiteBoardGUI {
                     Rectangle cellBounds = userList.getCellBounds(index, index);
                     int clickX = e.getX() - cellBounds.x;
 
-                    // Roughly detect click near right side (where delete icon is)
+                    // Detect click near delete icon
                     if (clickX > cellBounds.width - 30) {
                         String username = userListModel.get(index);
                         int confirm = JOptionPane.showConfirmDialog(
@@ -65,15 +68,27 @@ public class ServerGUI extends AbstractWhiteBoardGUI {
 
     }
 
-    // @Override
-    // protected void broadcastClear() {
-    // // TODO send a “clear” message to all clients
-    // }
+    @Override
+    public void onJoinRequest(String username) {
+        SwingUtilities.invokeLater(() -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Allow user '" + username + "' to join?",
+                    "New Join Request",
+                    JOptionPane.YES_NO_OPTION
+            );
 
+            if (confirm == JOptionPane.YES_OPTION) {
+                server.approveClient(username);
+            } else {
+                server.denyClient(username);
+            }
+        });
+    }
+
+    // File operations menu
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
-
-        // === FILE MENU ===
         JMenu fileMenu = new JMenu("File");
         fileMenu.setMnemonic(KeyEvent.VK_F);
 
@@ -91,7 +106,7 @@ public class ServerGUI extends AbstractWhiteBoardGUI {
                 KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
 
-        // Add listeners (placeholders for now)
+        // Add listeners
         newItem.addActionListener(e -> onNewFile());
         openItem.addActionListener(e -> onOpenFile());
         saveItem.addActionListener(e -> onSaveFile());
@@ -111,10 +126,10 @@ public class ServerGUI extends AbstractWhiteBoardGUI {
         return menuBar;
     }
 
-    // === Placeholder Handlers (manager-controlled) ===
+    // File operation handlers
     private void onNewFile() {
         System.out.println("[Server] New whiteboard created.");
-        // TODO: clear canvas, broadcast reset to clients
+        // Clear canvas, broadcast reset to clients
 
         // Reset to default file name
         whiteboardFile = new File("Whiteboard.png");

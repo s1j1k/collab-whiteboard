@@ -2,26 +2,21 @@ package com.example.client;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-
-import com.example.gui.ClientGUI;
 import com.example.gui.JoinWindow;
 
 public class JoinWhiteBoard {
 
     public static void main(String[] args) {
         // Parse command line arguments
-        // Expected: java JoinWhiteBoard <serverIPAddress> <serverPort> username
+        // Expected: java JoinWhiteBoard <serverIPAddress> <serverPort>
         String serverAddress;
         int port;
-        // String username;
-
-        // FIXME detailed error handling
         try {
             serverAddress = new String(args[0]);
             port = Integer.parseInt(args[1]);
-            // username = new String(args[2]);
         } catch (Throwable e) {
-            // logger.error("An error occurred while parsing command line arguments.", e);
+            System.out
+                    .println("Pleas provide command line arguments: server IP address and port number and try again.");
             throw new RuntimeException(e);
         }
 

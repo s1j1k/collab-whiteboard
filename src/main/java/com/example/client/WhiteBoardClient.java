@@ -24,7 +24,6 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     private String host;
     private int port;
     private String username;
-    // FIXME is it ok to launch GUI here?
     private ClientGUI gui = new ClientGUI();
     private WhiteBoardServerInterface serverRef;
     private WhiteBoardClientInterface clientStub;
@@ -33,6 +32,7 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         super();
         this.host = host;
         this.port = port;
+        this.clientStub = this;
     }
 
     @Override
@@ -88,10 +88,8 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         return serverRef;
     }
 
-    // FIXME don't use this?
     public WhiteBoardClientInterface getClientStub() {
-        // TODO ensure its always this
-        return this;
+        return clientStub;
     }
 
     public String getUsername() {
@@ -99,8 +97,6 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     }
 
     public void launchClientGui() {
-
-        // TODO implement this
         // Fetch initial state
         ArrayList<ChatMessage> history;
         byte[] snapshot;
@@ -119,12 +115,10 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
 
         // Launch Server GUI safely on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
-            gui.pack(); // respect preferred sizes
-            gui.setLocationRelativeTo(null); // center on screen
             gui.setVisible(true);
-            // gui.setVisible(true);
         });
 
+        // Set username in the canvas
         gui.getCanvas().setUsername(username);
 
         // Send draw actions to server
@@ -145,9 +139,8 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
             }
         });
 
-        // Send messages to server
+        // Send messages to server via RMI
         gui.getChatPanel().setChatListener(message -> {
-            // send message to server via RMI
             System.out.println("Sending: " + message);
             try {
                 getServerRef().sendChatMessage(new ChatMessage(username, message));

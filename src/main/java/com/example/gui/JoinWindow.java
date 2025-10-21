@@ -48,7 +48,7 @@ public class JoinWindow extends JFrame {
 
         new Thread(() -> {
             try {
-                // register the client
+                // Register the client
                 boolean success = client.register(username, client.getClientStub());
                 if (success) {
                     SwingUtilities.invokeLater(() -> {

@@ -1,12 +1,8 @@
 package com.example.server;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-// MessageServer.java
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -17,24 +13,27 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import com.example.gui.ServerGUI;
 import com.example.shared.ChatMessage;
 import com.example.shared.CursorPosition;
 import com.example.shared.DrawAction;
+import com.example.shared.ServerEventListener;
 import com.example.shared.UserListUpdate;
 import com.example.shared.WhiteBoardClientInterface;
 import com.example.shared.WhiteBoardServerInterface;
 
 public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardServerInterface {
-    // FIXME take username as a param
     ServerGUI gui;
     private final Map<String, WhiteBoardClientInterface> connectedClients = new ConcurrentHashMap<>();
+    // Keep track of pending joins
+    private final Map<String, WhiteBoardClientInterface> pendingClients = new ConcurrentHashMap<>();
     private List<ChatMessage> chatHistory = new ArrayList<ChatMessage>();
-    // private List<DrawAction> drawHistory = new ArrayList<DrawAction>();
     private int port;
     private String hostUsername;
+    private ServerEventListener eventListener;
 
     protected WhiteBoardServer(int port, String hostUsername) throws RemoteException {
         super();
@@ -43,25 +42,48 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         gui = new ServerGUI(this); // Ensured username is set
     }
 
+    public void setEventListener(ServerEventListener listener) {
+        this.eventListener = listener;
+    }
+
     @Override
     public synchronized boolean registerClient(String username, WhiteBoardClientInterface client)
             throws RemoteException {
-        if (username == null || client == null) {
-            // TODO share what happened to the client error message instead of
-            System.out.println("Registration failed: null username or client");
+
+        if (username == null || client == null || username.equals(hostUsername)) {
             return false;
         }
 
-        if (connectedClients.containsKey(username) || username.equals(hostUsername)) {
-            System.out.println("Registration failed: username already exists");
+        if (connectedClients.containsKey(username) || pendingClients.containsKey(username)) {
             return false;
         }
 
+        // Temporarily store as pending
+        pendingClients.put(username, client);
+
+        // Notify the GUI asynchronously
+        if (eventListener != null) {
+            eventListener.onJoinRequest(username);
+        }
+
+        // The GUI will call approveClient(username) or denyClient(username)
+        return true; // we’ll update this to actual feedback later
+    }
+
+    public void approveClient(String username) {
+    WhiteBoardClientInterface client = pendingClients.remove(username);
+    if (client != null) {
         connectedClients.put(username, client);
         broadcastUserList();
-        System.out.println("Client registered: " + username);
-        return true;
+        System.out.println("Approved client: " + username);
     }
+}
+
+public void denyClient(String username) {
+    pendingClients.remove(username);
+    System.out.println("Denied client: " + username);
+}
+
 
     @Override
     public void sendChatMessage(ChatMessage message) throws RemoteException {
@@ -205,7 +227,6 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
 
             // FIXME add this to initialization/constructor of the GUI
             gui.getCanvas().setUsername(hostUsername);
-            
 
             // Whenever server draws locally, send it to all of the clients
             gui.getCanvas().setDrawListener(action -> {
