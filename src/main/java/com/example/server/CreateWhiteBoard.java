@@ -24,17 +24,15 @@ public class CreateWhiteBoard {
         try {
             // Start the RMI whiteboard server
             WhiteBoardServer server = new WhiteBoardServer(port, username);
-            
-
-            // Allow graceful shutdown
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                System.out.println("Server shutting down...");
-                // FIXME notify when server exits on purpose
-                server.shutdownServer();
-            }));
-
             server.start();
             System.out.println("Whiteboard server started successfully.");
+
+             // Allow graceful shutdown
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                System.out.println("Server shutting down...");
+                // Notify when server exits on purpose
+                server.shutdownServer();
+            }));
         } catch (Exception e) {
             System.err.println("Failed to start Whiteboard Server: " + e.getMessage());
             e.printStackTrace();

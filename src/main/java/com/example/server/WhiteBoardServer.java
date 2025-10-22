@@ -79,7 +79,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         // The GUI will call approveClient(username) or denyClient(username)
     }
 
-    public void approveClient(String username) {
+    public synchronized void approveClient(String username) {
         WhiteBoardClientInterface client = pendingClients.remove(username);
         if (client != null) {
             try {
@@ -97,7 +97,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         }
     }
 
-    public void denyClient(String username, String reason) {
+    public synchronized void denyClient(String username, String reason) {
         try {
             pendingClients.get(username).onRegistrationRejected(reason);
         } catch (RemoteException e) {
@@ -109,7 +109,28 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     }
 
     @Override
-    public void sendChatMessage(ChatMessage message) throws RemoteException {
+    public synchronized void unregisterClient(String username) throws RemoteException {
+        connectedClients.remove(username);
+        broadcastUserList();
+        System.out.println("Client disconnected: " + username);
+    }
+
+    @Override
+    public synchronized void kickUser(String username) throws RemoteException {
+        WhiteBoardClientInterface client = connectedClients.remove(username);
+        if (client != null) {
+            try {
+                client.kickedFromServer(); // optional client callback
+            } catch (RemoteException e) {
+                // Do nothing
+                System.err.println("Error notifying kicked client: " + e.getMessage());
+            }
+            broadcastUserList();
+        }
+    }
+
+    @Override
+    public synchronized void sendChatMessage(ChatMessage message) throws RemoteException {
         System.out.println("Message received: " + message);
         // Store the message in chat history
         chatHistory.add(message);
@@ -139,7 +160,6 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
 
     }
 
-    // FIXME make it thread safe
     @Override
     public synchronized void broadcastDrawAction(DrawAction action) throws RemoteException {
         // Update the server GUI canvas
@@ -163,29 +183,6 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         if (disconnectedClients.size() > 0) {
             disconnectedClients.forEach(u -> connectedClients.remove(u));
             broadcastUserList();
-        }
-    }
-
-    @Override
-    public synchronized void unregisterClient(String username) throws RemoteException {
-        connectedClients.remove(username);
-        broadcastUserList();
-        System.out.println("Client disconnected: " + username);
-    }
-
-    @Override
-    public synchronized ArrayList<ChatMessage> getChatHistory() throws RemoteException {
-        return new ArrayList<>(chatHistory);
-    }
-
-    @Override
-    public synchronized byte[] getCanvasSnapshot() throws RemoteException {
-        BufferedImage canvasImage = gui.getCanvas().getCanvasImage();
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            ImageIO.write(canvasImage, "png", baos);
-            return baos.toByteArray();
-        } catch (IOException e) {
-            throw new RemoteException("Failed to encode canvas", e);
         }
     }
 
@@ -214,7 +211,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         }
     }
 
-    private void broadcastUserList() {
+    private synchronized void broadcastUserList() {
         ArrayList<String> fullUsersList = new ArrayList<>(connectedClients.keySet());
         // Add server owner's username to client usernames
         fullUsersList.addFirst(hostUsername);
@@ -241,21 +238,22 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     }
 
     @Override
-    public synchronized void kickUser(String username) throws RemoteException {
-        WhiteBoardClientInterface client = connectedClients.remove(username);
-        if (client != null) {
-            try {
-                client.kickedFromServer(); // optional client callback
-            } catch (RemoteException e) {
-                // Do nothing
-                System.err.println("Error notifying kicked client: " + e.getMessage());
-            }
-            broadcastUserList();
+    public synchronized ArrayList<ChatMessage> getChatHistory() throws RemoteException {
+        return new ArrayList<>(chatHistory);
+    }
+
+    @Override
+    public synchronized byte[] getCanvasSnapshot() throws RemoteException {
+        BufferedImage canvasImage = gui.getCanvas().getCanvasImage();
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            ImageIO.write(canvasImage, "png", baos);
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new RemoteException("Failed to encode canvas", e);
         }
     }
 
-    // FIXME any thread safety considerations here?
-    public void broadcastCanvasImage() throws RemoteException {
+    public synchronized void broadcastCanvasImage() throws RemoteException {
         // Send out updated canvas
         // Update clients gui
         byte[] imageData = getCanvasSnapshot();
@@ -278,7 +276,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         }
     }
 
-    public void notifyShutdown(String reason) {
+    public synchronized void notifyShutdown(String reason) {
         System.out.println("[INFO] Notifying clients of server shutdown...");
         for (var entry : connectedClients.entrySet()) {
             String user = entry.getKey();
@@ -292,7 +290,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         }
     }
 
-    public void shutdownServer() {
+    public synchronized void shutdownServer() {
         notifyShutdown("Host has closed the whiteboard.");
         try {
             UnicastRemoteObject.unexportObject(this, true);
@@ -301,7 +299,6 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         } catch (Exception e) {
             System.err.println("Error shutting down server: " + e.getMessage());
         }
-        System.exit(0);
     }
 
     public String getUsername() {
