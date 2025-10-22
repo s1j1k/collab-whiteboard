@@ -1,8 +1,4 @@
-```
-java CreateWhiteBoard <serverIPAddress> <serverPort> username
-```
-
-🏗️ Build and run
+## 🏗️ Build and run
 
 In your project root, run:
 
@@ -11,12 +7,12 @@ mvn clean package
 
 Then run either:
 
-java -jar target/CreateWhiteBoard.jar
+java -jar target/CreateWhiteBoard.jar  <serverPort> <username>
 
 
 or
 
-java -jar target/JoinWhiteBoard.jar
+java -jar target/JoinWhiteBoard.jar <serverIPAddress> <serverPort>
 
 
 ## 🖼️ Icon Credits
