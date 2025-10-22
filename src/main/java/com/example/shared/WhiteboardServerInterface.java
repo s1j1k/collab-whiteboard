@@ -9,7 +9,7 @@ import java.util.ArrayList;
  */
 
 public interface WhiteBoardServerInterface extends Remote {
-    boolean registerClient(String username, WhiteBoardClientInterface client) throws RemoteException;
+    void registerClient(String username, WhiteBoardClientInterface client) throws RemoteException;
 
     void unregisterClient(String username) throws RemoteException;
 

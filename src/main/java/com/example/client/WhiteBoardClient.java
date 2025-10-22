@@ -5,8 +5,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
@@ -105,14 +103,16 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         });
     }
 
+    /** Connect to server RMI service */
     public void connect() throws Exception {
         Registry registry = LocateRegistry.getRegistry(host, port);
         serverRef = (WhiteBoardServerInterface) registry.lookup("WhiteBoardService");
     }
 
-    public boolean register(String username, WhiteBoardClientInterface clientStub) throws RemoteException {
+    /** Send registration request to server for approval */
+    public void register(String username, WhiteBoardClientInterface clientStub) throws RemoteException {
         this.username = username;
-        return serverRef.registerClient(username, clientStub);
+        serverRef.registerClient(username, clientStub);
     }
 
     public WhiteBoardServerInterface getServerRef() {
@@ -130,10 +130,9 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
     /**
      * Defines what happens when the user clicks "Connect"
      */
-    // FIXME does it need to be static?
     private ActionListener onConnect() {
-        return e -> {
-            JButton sourceButton = (JButton) e.getSource();
+        return event -> {
+            JButton sourceButton = (JButton) event.getSource();
             WaitingScreen waitingScreen = (WaitingScreen) SwingUtilities.getWindowAncestor(sourceButton);
 
             String username = waitingScreen.getUsername();
@@ -144,23 +143,34 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
 
             waitingScreen.showWaitingState();
 
-            // Call server RMI method
+            // Send registration request to server and wait for approval
             try {
                 register(username, getClientStub());
-            } catch (RemoteException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
+            } catch (RemoteException e) {
+                handleServerDisconnect(e);
             }
 
         };
     }
 
+    /** Exit the application when server shuts down */
+    private void handleServerDisconnect(Exception e) {
+        System.err.println("[ERROR] Lost connection to server: " + e.getMessage());
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(gui,
+                    "Connection to the whiteboard server was lost.\n" +
+                            "The application will now close.",
+                    "Disconnected", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        });
+    }
+
     public void launchWaitingScreen() {
-         // Launch Waiting Screen safely on the Event Dispatch Thread
+        // Launch Waiting Screen safely on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
             waitingScreen.setVisible(true);
         });
-        
+
     }
 
     public void launchClientGui() {
@@ -176,8 +186,7 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
                 gui.getCanvas().loadCanvasImage(snapshot);
             });
         } catch (RemoteException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            handleServerDisconnect(e);
         }
 
         // Launch Server GUI safely on the Event Dispatch Thread
@@ -193,7 +202,7 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
             try {
                 getServerRef().broadcastDrawAction(action);
             } catch (Exception e) {
-                e.printStackTrace();
+                handleServerDisconnect(e);
             }
         });
 
@@ -202,7 +211,7 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
             try {
                 getServerRef().broadcastCursorPosition(pos);
             } catch (Exception e) {
-                e.printStackTrace();
+                handleServerDisconnect(e);
             }
         });
 
@@ -212,8 +221,7 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
             try {
                 getServerRef().sendChatMessage(new ChatMessage(username, message));
             } catch (RemoteException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                handleServerDisconnect(e);
             }
         });
 

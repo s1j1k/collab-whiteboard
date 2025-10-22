@@ -23,13 +23,21 @@ public class JoinWhiteBoard {
             // Connect to network
             client.connect();
 
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                System.out.println("Client closing...");
+                try {
+                    client.getServerRef().unregisterClient(client.getUsername());
+                } catch (Exception ignored) {
+                }
+            }));
+
             // Launch gui entry point
             client.launchWaitingScreen();
 
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Failed to connect to server: " + e.getMessage());
-           
+
         }
 
     }

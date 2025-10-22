@@ -1,51 +1,43 @@
 package com.example.server;
 
-// FIXME logger not installed correctly
+import java.rmi.registry.LocateRegistry;
+import java.rmi.server.UnicastRemoteObject;
 
-// import org.apache.logging.log4j.Logger;
-// import org.apache.logging.log4j.LogManager;
-
+/**
+ * Server entrypoint class
+ * Launches Whiteboard RMI Server
+ */
 public class CreateWhiteBoard {
-
-    // Logger
-    // private static Logger logger = LogManager.getLogger(CreateWhiteBoard.class);
-
-    // TODO parse command line arguments
-    /**
-     * Main method for testing GUI
-     * You should modify this to include command line argument parsing
-     */
     public static void main(String[] args) {
         // Parse command line arguments
-        // Expected: java CreateWhiteBoard <serverIPAddress> <serverPort> username
-        String host;
+        // Expected: java CreateWhiteBoard <serverPort> username
         int port;
         String username;
-
-        // FIXME detailed error handling
         try {
-            host = new String(args[0]);
-            port = Integer.parseInt(args[1]);
-            username = new String(args[2]);
+            port = Integer.parseInt(args[0]);
+            username = new String(args[1]);
         } catch (Throwable e) {
-            // logger.error("An error occurred while parsing command line arguments.", e);
+            System.out.println("Please provide command line arguments: <server port> <username>.");
             throw new RuntimeException(e);
         }
 
         try {
             // Start the RMI whiteboard server
-            // FIXME do this on a separate thread
             WhiteBoardServer server = new WhiteBoardServer(port, username);
-            // FIXME need host name?
-            // TODO add drawing interface etc. etc.
-            server.start();
-
             
 
-            // FIXME move this to server start function itself?
-            // Launch Server GUI safely on the Event Dispatch Thread
-            // SwingUtilities.invokeLater(() -> new ServerGUI().setVisible(true));
+            // Allow graceful shutdown
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                System.out.println("Server shutting down...");
+                try {
+                    UnicastRemoteObject.unexportObject(server, true);
+                    LocateRegistry.getRegistry(port).unbind("WhiteBoardService");
+                } catch (Exception e) {
+                    // Ignore
+                }
+            }));
 
+            server.start();
             System.out.println("Whiteboard server started successfully.");
         } catch (Exception e) {
             System.err.println("Failed to start Whiteboard Server: " + e.getMessage());

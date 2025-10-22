@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.imageio.ImageIO;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import com.example.gui.ServerGUI;
@@ -25,10 +24,13 @@ import com.example.shared.UserListUpdate;
 import com.example.shared.WhiteBoardClientInterface;
 import com.example.shared.WhiteBoardServerInterface;
 
+/**
+ * Whiteboard RMI Server
+ */
+
 public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardServerInterface {
     ServerGUI gui;
     private final Map<String, WhiteBoardClientInterface> connectedClients = new ConcurrentHashMap<>();
-    // Keep track of pending joins
     private final Map<String, WhiteBoardClientInterface> pendingClients = new ConcurrentHashMap<>();
     private List<ChatMessage> chatHistory = new ArrayList<ChatMessage>();
     private int port;
@@ -47,16 +49,23 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     }
 
     @Override
-    public synchronized boolean registerClient(String username, WhiteBoardClientInterface client)
+    public synchronized void registerClient(String username, WhiteBoardClientInterface client)
             throws RemoteException {
 
-        if (username == null || client == null || username.equals(hostUsername)) {
-            return false;
+        if (username == null) {
+            client.onRegistrationRejected("Please provide username.");
+            return;
         }
 
-        // FIXME tell user when it gets denied for this reason
-        if (connectedClients.containsKey(username) || pendingClients.containsKey(username)) {
-            return false;
+        if (client == null) {
+            client.onRegistrationRejected("An error occurred.");
+            return;
+        }
+
+        if (username.equals(hostUsername) || connectedClients.containsKey(username)
+                || pendingClients.containsKey(username)) {
+            client.onRegistrationRejected("Username is already taken. Please choose a different username.");
+            return;
         }
 
         // Temporarily store as pending
@@ -68,35 +77,36 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         }
 
         // The GUI will call approveClient(username) or denyClient(username)
-        return true; // we’ll update this to actual feedback later
     }
 
     public void approveClient(String username) {
-    WhiteBoardClientInterface client = pendingClients.remove(username);
-    if (client != null) {
-        try {
-            client.onRegistrationApproved();
-        } catch (RemoteException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        WhiteBoardClientInterface client = pendingClients.remove(username);
+        if (client != null) {
+            try {
+                client.onRegistrationApproved();
+
+            } catch (RemoteException e) {
+                System.err.println("[WARN] Lost connection to client: " + username);
+                // Don't add to list of connected clients
+                return;
+            }
+            connectedClients.put(username, client);
+            broadcastUserList();
+            System.out.println("Approved client: " + username);
+
         }
-        connectedClients.put(username, client);
-        broadcastUserList();
-        System.out.println("Approved client: " + username);
     }
-}
 
-public void denyClient(String username, String reason) {
-    try {
-        pendingClients.get(username).onRegistrationRejected(reason);
-    } catch (RemoteException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+    public void denyClient(String username, String reason) {
+        try {
+            pendingClients.get(username).onRegistrationRejected(reason);
+        } catch (RemoteException e) {
+            // Do nothing if unable to reject a client
+            System.err.println("[WARN] Lost connection to client: " + username);
+        }
+        pendingClients.remove(username);
+        System.out.println("Denied client: " + username);
     }
-    pendingClients.remove(username);
-    System.out.println("Denied client: " + username);
-}
-
 
     @Override
     public void sendChatMessage(ChatMessage message) throws RemoteException {
@@ -104,18 +114,29 @@ public void denyClient(String username, String reason) {
         // Store the message in chat history
         chatHistory.add(message);
 
-        // TODO improvement: add some formatting / color
+        // Add to server GUI chat panel
         gui.getChatPanel().appendMessage(message.toString());
 
         // Send to all client chat windows
         System.out.println("Updating client chat windows...");
-        for (WhiteBoardClientInterface client : connectedClients.values()) {
+        ArrayList<String> disconnectedClients = new ArrayList<>();
+        for (var entry : connectedClients.entrySet()) {
+            String user = entry.getKey();
+            WhiteBoardClientInterface client = entry.getValue();
             try {
                 client.receiveChatMessage(message);
             } catch (RemoteException e) {
-                System.err.println("Failed to send action to a client: " + e.getMessage());
+                System.err.println("[WARN] Lost connection to client: " + user);
+                // Mark for removal later
+                disconnectedClients.add(user);
             }
         }
+
+        if (disconnectedClients.size() > 0) {
+            disconnectedClients.forEach(u -> connectedClients.remove(u));
+            broadcastUserList();
+        }
+
     }
 
     // FIXME make it thread safe
@@ -127,12 +148,21 @@ public void denyClient(String username, String reason) {
 
         // Update client canvases
         System.out.println("Updating client canvases...");
-        for (WhiteBoardClientInterface client : connectedClients.values()) {
+        ArrayList<String> disconnectedClients = new ArrayList<>();
+        for (var entry : connectedClients.entrySet()) {
+            String user = entry.getKey();
+            WhiteBoardClientInterface client = entry.getValue();
             try {
                 client.receiveDrawAction(action);
             } catch (RemoteException e) {
-                System.err.println("Failed to send action to a client: " + e.getMessage());
+                System.err.println("[WARN] Lost connection to client: " + user);
+                // Mark for removal later
+                disconnectedClients.add(user);
             }
+        }
+        if (disconnectedClients.size() > 0) {
+            disconnectedClients.forEach(u -> connectedClients.remove(u));
+            broadcastUserList();
         }
     }
 
@@ -166,12 +196,22 @@ public void denyClient(String username, String reason) {
         SwingUtilities.invokeLater(() -> gui.getCanvas().updateCursorPosition(pos));
 
         // Update clients cursor positions list
-        for (WhiteBoardClientInterface c : connectedClients.values()) {
+        ArrayList<String> disconnectedClients = new ArrayList<>();
+        for (var entry : connectedClients.entrySet()) {
+            String user = entry.getKey();
+            WhiteBoardClientInterface client = entry.getValue();
             try {
-                c.updateCursorPosition(pos);
+                client.updateCursorPosition(pos);
             } catch (RemoteException e) {
-                System.err.println("Failed to update cursor for client: " + e.getMessage());
+                System.err.println("[WARN] Lost connection to client: " + user);
+                // Mark for removal later
+                disconnectedClients.add(user);
             }
+        }
+
+        if (disconnectedClients.size() > 0) {
+            disconnectedClients.forEach(u -> connectedClients.remove(u));
+            broadcastUserList();
         }
     }
 
@@ -183,12 +223,21 @@ public void denyClient(String username, String reason) {
         // Update server gui
         SwingUtilities.invokeLater(() -> gui.updateUserList(update.getUsernames()));
         // Update clients gui
-        for (WhiteBoardClientInterface c : connectedClients.values()) {
+        ArrayList<String> disconnectedClients = new ArrayList<>();
+        for (var entry : connectedClients.entrySet()) {
+            String user = entry.getKey();
+            WhiteBoardClientInterface client = entry.getValue();
             try {
-                c.receiveUserListUpdate(update);
+                client.receiveUserListUpdate(update);
             } catch (RemoteException e) {
-                System.err.println("Failed to update user list: " + e.getMessage());
+                System.err.println("[WARN] Lost connection to client: " + user);
+                // Mark for removal later
+                disconnectedClients.add(user);
             }
+        }
+        if (disconnectedClients.size() > 0) {
+            disconnectedClients.forEach(u -> connectedClients.remove(u));
+            broadcastUserList();
         }
     }
 
@@ -199,25 +248,34 @@ public void denyClient(String username, String reason) {
             try {
                 client.kickedFromServer(); // optional client callback
             } catch (RemoteException e) {
+                // Do nothing
                 System.err.println("Error notifying kicked client: " + e.getMessage());
             }
             broadcastUserList();
         }
     }
 
-    // @Override
-    // FIXME write lck (?)
-    // what if we drraw straight after?
+    // FIXME any thread safety considerations here?
     public void broadcastCanvasImage() throws RemoteException {
         // Send out updated canvas
         // Update clients gui
         byte[] imageData = getCanvasSnapshot();
-        for (WhiteBoardClientInterface c : connectedClients.values()) {
+        ArrayList<String> disconnectedClients = new ArrayList<>();
+        for (var entry : connectedClients.entrySet()) {
+            String user = entry.getKey();
+            WhiteBoardClientInterface client = entry.getValue();
             try {
-                c.receiveCanvasImage(imageData);
+                client.receiveCanvasImage(imageData);
             } catch (RemoteException e) {
-                System.err.println("Failed to update user list: " + e.getMessage());
+                System.err.println("[WARN] Lost connection to client: " + user);
+                // Mark for removal later
+                disconnectedClients.add(user);
             }
+        }
+
+        if (disconnectedClients.size() > 0) {
+            disconnectedClients.forEach(u -> connectedClients.remove(u));
+            broadcastUserList();
         }
     }
 
@@ -246,7 +304,8 @@ public void denyClient(String username, String reason) {
                 try {
                     broadcastDrawAction(action);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    // Remote exception handled in method itself
+                    System.err.println("An error occured while broadcasting draw action.");
                 }
             });
 
@@ -255,25 +314,27 @@ public void denyClient(String username, String reason) {
                 try {
                     broadcastCursorPosition(pos);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    // Remote exception handled in method itself
+                    System.err.println("An error occured while broadcasting cursor position.");
                 }
             });
 
             // Send messages to clients
             gui.getChatPanel().setChatListener(message -> {
-                // send message to server via RMI
+                // Send message to server via RMI
                 System.out.println("Sending: " + message);
                 try {
                     sendChatMessage(new ChatMessage(hostUsername, message));
                 } catch (RemoteException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    // Remote exception handled in method itself
+                    System.err.println("An error occured while sending chat message.");
                 }
             });
 
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();
+            // FIXME do we notify clients or handle it over there
         }
     }
 }
