@@ -87,6 +87,7 @@ public abstract class AbstractWhiteBoardGUI extends JFrame {
         for (String name : usernames) {
             userListModel.addElement(name);
         }
+        canvas.updateCursors(usernames);
     }
 
 }

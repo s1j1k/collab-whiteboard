@@ -103,6 +103,17 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         });
     }
 
+    @Override
+    public void onServerShutdown(String reason) throws RemoteException {
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(null,
+                    "The server has shut down.\nReason: " + reason,
+                    "Disconnected",
+                    JOptionPane.INFORMATION_MESSAGE);
+            System.exit(0); // Or navigate back to login screen
+        });
+    }
+
     /** Connect to server RMI service */
     public void connect() throws Exception {
         Registry registry = LocateRegistry.getRegistry(host, port);
@@ -164,6 +175,8 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
             System.exit(0);
         });
     }
+
+    
 
     public void launchWaitingScreen() {
         // Launch Waiting Screen safely on the Event Dispatch Thread

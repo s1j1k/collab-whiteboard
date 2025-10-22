@@ -411,18 +411,18 @@ public class WhiteBoardCanvas extends JPanel {
 
         canvasImage = ImageIO.read(file);
 
-
-            Stroke previousStroke = g2d.getStroke();
-            Color previousColor = g2d.getColor();
-            g2d.dispose();
-            g2d = canvasImage.createGraphics();
-            g2d.setColor(previousColor);
-            g2d.setStroke(previousStroke);
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        Stroke previousStroke = g2d.getStroke();
+        Color previousColor = g2d.getColor();
+        g2d.dispose();
+        g2d = canvasImage.createGraphics();
+        g2d.setColor(previousColor);
+        g2d.setStroke(previousStroke);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     }
 
     public void saveCanvasToFile(File file) throws IOException {
-        // BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        // BufferedImage image = new BufferedImage(getWidth(), getHeight(),
+        // BufferedImage.TYPE_INT_ARGB);
         // Graphics2D g2 = image.createGraphics();
         // paint(g2);
         // g2.dispose();
@@ -449,6 +449,11 @@ public class WhiteBoardCanvas extends JPanel {
 
     public BufferedImage getCanvasImage() {
         return canvasImage;
+    }
+
+    /** Remove cursors for disconnected clients */
+    public void updateCursors(java.util.List<String> users) {
+        cursors.keySet().removeIf(username -> !users.contains(username));
     }
 
 }
