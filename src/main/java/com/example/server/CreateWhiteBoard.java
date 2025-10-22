@@ -29,12 +29,8 @@ public class CreateWhiteBoard {
             // Allow graceful shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 System.out.println("Server shutting down...");
-                try {
-                    UnicastRemoteObject.unexportObject(server, true);
-                    LocateRegistry.getRegistry(port).unbind("WhiteBoardService");
-                } catch (Exception e) {
-                    // Ignore
-                }
+                // FIXME notify when server exits on purpose
+                server.shutdownServer();
             }));
 
             server.start();

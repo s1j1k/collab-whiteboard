@@ -23,6 +23,8 @@ public interface WhiteBoardClientInterface extends Remote {
 
     void receiveCanvasImage(byte[] imageData) throws RemoteException;
 
+    void onServerShutdown(String reason) throws RemoteException;
+
 
 
 }

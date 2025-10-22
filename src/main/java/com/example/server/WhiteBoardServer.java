@@ -166,7 +166,6 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         }
     }
 
-    // TODO include in client finally block
     @Override
     public synchronized void unregisterClient(String username) throws RemoteException {
         connectedClients.remove(username);
@@ -279,6 +278,32 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         }
     }
 
+    public void notifyShutdown(String reason) {
+        System.out.println("[INFO] Notifying clients of server shutdown...");
+        for (var entry : connectedClients.entrySet()) {
+            String user = entry.getKey();
+            WhiteBoardClientInterface client = entry.getValue();
+            try {
+                client.onServerShutdown(reason);
+            } catch (RemoteException e) {
+                // No need to remove client here — server is shutting down anyway
+                System.err.println("[WARN] Could not notify " + user + " of shutdown.");
+            }
+        }
+    }
+
+    public void shutdownServer() {
+        notifyShutdown("Host has closed the whiteboard.");
+        try {
+            UnicastRemoteObject.unexportObject(this, true);
+            LocateRegistry.getRegistry(port).unbind("WhiteBoardService");
+            System.out.println("Server shut down cleanly.");
+        } catch (Exception e) {
+            System.err.println("Error shutting down server: " + e.getMessage());
+        }
+        System.exit(0);
+    }
+
     public String getUsername() {
         return hostUsername;
     }
@@ -335,6 +360,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();
             // FIXME do we notify clients or handle it over there
+
         }
     }
 }
