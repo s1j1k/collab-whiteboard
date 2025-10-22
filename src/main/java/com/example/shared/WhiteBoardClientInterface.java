@@ -5,8 +5,10 @@ import java.rmi.RemoteException;
 
 /**
  * Messages to be sent from Server to Client
+ * 
+ * @author Sally Arnold
+ *         Student ID: 992316
  */
-
 public interface WhiteBoardClientInterface extends Remote {
     void onRegistrationApproved() throws RemoteException;
     void onRegistrationRejected(String reason) throws RemoteException;

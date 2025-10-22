@@ -19,6 +19,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import com.example.server.WhiteBoardServer;
 import com.example.shared.ServerEventListener;
 
+/**
+ * 
+ * Server GUI
+ * 
+ * @author Sally Arnold
+ *         Student ID: 992316
+ */
 public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListener {
 
     // Default file name
@@ -75,8 +82,7 @@ public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListe
                     this,
                     "Allow user '" + username + "' to join?",
                     "New Join Request",
-                    JOptionPane.YES_NO_OPTION
-            );
+                    JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
                 server.approveClient(username);
@@ -128,52 +134,53 @@ public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListe
 
     // File operation handlers
     private void onNewFile() {
-        System.out.println("[Server] New whiteboard created.");
+        System.out.println("New whiteboard created.");
         // Clear canvas, broadcast reset to clients
 
         // Reset to default file name
         whiteboardFile = new File("Whiteboard.png");
-
         canvas.clear();
-
 
         try {
             server.broadcastCanvasImage();
         } catch (RemoteException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.err.println("[ERROR] Server failed while boradcasting canvas image." + e.getMessage());
+            // Call shutdown hooks and exit
+            System.exit(1);
         }
     }
 
     private void onOpenFile() {
-        System.out.println("[Server] Opening existing whiteboard...");
+        System.out.println("Opening existing whiteboard...");
         JFileChooser chooser = new JFileChooser();
-    
+
         FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
                 "Image Files (JPG, JPEG, PNG, GIF)", "jpg", "jpeg", "png", "gif");
-         chooser.setFileFilter(imageFilter);
+        chooser.setFileFilter(imageFilter);
 
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            // TODO: load saved whiteboard
+            // Load saved whiteboard
             whiteboardFile = chooser.getSelectedFile();
             try {
                 canvas.loadFromFile(whiteboardFile);
                 server.broadcastCanvasImage();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                System.err.println("[ERROR] Server failed to load whiteboard from file." + e.getMessage());
+                // Call shutdown hooks and exit
+                System.exit(1);
             }
         }
     }
 
     private void onSaveFile() {
         System.out.println("[Server] Saving current whiteboard...");
-        // TODO: serialize whiteboard state
+        // Serialize whiteboard state
         try {
             canvas.saveCanvasToFile(whiteboardFile);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.err.println("[ERROR] Server failed to save canvas to file." + e.getMessage());
+            // Call shutdown hooks and exit
+            System.exit(1);
         }
     }
 
@@ -182,15 +189,16 @@ public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListe
         JFileChooser chooser = new JFileChooser();
         FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
                 "Image Files (JPG, JPEG, PNG, GIF)", "jpg", "jpeg", "png", "gif");
-         chooser.setFileFilter(imageFilter);
+        chooser.setFileFilter(imageFilter);
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            // TODO: write to selected file
+            // Write to selected file
             whiteboardFile = chooser.getSelectedFile();
             try {
                 canvas.saveCanvasToFile(whiteboardFile);
             } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                System.err.println("Server failed to save whiteboard to file." + e.getMessage());
+                // Call shutdown hooks and exit
+                System.exit(1);
             }
         }
     }

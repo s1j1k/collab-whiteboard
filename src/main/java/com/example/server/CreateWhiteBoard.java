@@ -1,11 +1,11 @@
 package com.example.server;
 
-import java.rmi.registry.LocateRegistry;
-import java.rmi.server.UnicastRemoteObject;
-
 /**
  * Server entrypoint class
  * Launches Whiteboard RMI Server
+ * 
+ * @author Sally Arnold
+ *         Student ID: 992316
  */
 public class CreateWhiteBoard {
     public static void main(String[] args) {
@@ -27,7 +27,7 @@ public class CreateWhiteBoard {
             server.start();
             System.out.println("Whiteboard server started successfully.");
 
-             // Allow graceful shutdown
+            // Allow graceful shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 System.out.println("Server shutting down...");
                 // Notify when server exits on purpose

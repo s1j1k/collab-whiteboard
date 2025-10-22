@@ -20,6 +20,10 @@ import com.example.shared.UserListUpdate;
 import com.example.shared.WhiteBoardClientInterface;
 import com.example.shared.WhiteBoardServerInterface;
 
+/**
+ * @author Sally Arnold
+ *         Student ID: 992316
+ */
 public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardClientInterface {
 
     private String host;
@@ -95,7 +99,6 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
         });
     }
 
-    // TODO WRITE lock - server side / client side (?)
     @Override
     public void receiveCanvasImage(byte[] imageData) throws RemoteException {
         SwingUtilities.invokeLater(() -> {
@@ -175,8 +178,6 @@ public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardC
             System.exit(0);
         });
     }
-
-    
 
     public void launchWaitingScreen() {
         // Launch Waiting Screen safely on the Event Dispatch Thread

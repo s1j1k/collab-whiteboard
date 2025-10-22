@@ -4,6 +4,13 @@ import javax.swing.*;
 import com.formdev.flatlaf.FlatLightLaf;
 import java.awt.*;
 
+/**
+ * 
+ * Base abstract class for Whiteboard GUIs
+ * 
+ * @author Sally Arnold
+ *         Student ID: 992316
+ */
 public abstract class AbstractWhiteBoardGUI extends JFrame {
 
     protected WhiteBoardCanvas canvas;
@@ -30,7 +37,6 @@ public abstract class AbstractWhiteBoardGUI extends JFrame {
         setLayout(new BorderLayout());
 
         canvas = new WhiteBoardCanvas(800, 600);
-        // canvas.setUsername(username);
         toolbar = new ToolBarPanel(canvas);
 
         add(toolbar, BorderLayout.NORTH);
@@ -39,8 +45,7 @@ public abstract class AbstractWhiteBoardGUI extends JFrame {
         chatPanel = new ChatPanel();
         add(chatPanel, BorderLayout.WEST);
 
-
-        // === Users Button ===
+        // Users button
         usersButton = new JToggleButton(IconUtils.loadScaledIcon("/icons/users.png", 24, 24));
         usersButton.setToolTipText("Show connected users");
         usersButton.addActionListener(e -> toggleUserPanel());
@@ -51,7 +56,7 @@ public abstract class AbstractWhiteBoardGUI extends JFrame {
         usersButton.setRolloverEnabled(true); // ensure hover effect works
         toolbar.add(usersButton, BorderLayout.EAST);
 
-        // === Users Panel ===
+        // Users panel
         userListModel = new DefaultListModel<>();
         userList = new JList<>(userListModel);
         userList.setFont(new Font("SansSerif", Font.PLAIN, 14));

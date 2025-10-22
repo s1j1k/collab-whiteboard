@@ -2,6 +2,13 @@ package com.example.client;
 
 import javax.swing.JOptionPane;
 
+/**
+ * 
+ * Client entry point
+ * 
+ * @author Sally Arnold
+ *         Student ID: 992316
+ */
 public class JoinWhiteBoard {
 
     public static void main(String[] args) {
@@ -14,7 +21,7 @@ public class JoinWhiteBoard {
             port = Integer.parseInt(args[1]);
         } catch (Throwable e) {
             System.out
-                    .println("Pleas provide command line arguments: server IP address and port number and try again.");
+                    .println("Pleas provide command line arguments: <server IP address> <port number>.");
             throw new RuntimeException(e);
         }
 

@@ -1,5 +1,9 @@
 package com.example.shared;
 
+/**
+ * @author Sally Arnold
+ *         Student ID: 992316
+ */
 public enum Tool {
     LINE("Line", "/icons/line.png"),
     TRIANGLE("Triangle", "/icons/triangle.png"),

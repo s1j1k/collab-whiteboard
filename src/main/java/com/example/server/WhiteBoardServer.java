@@ -26,8 +26,10 @@ import com.example.shared.WhiteBoardServerInterface;
 
 /**
  * Whiteboard RMI Server
+ * 
+ * @author Sally Arnold
+ *         Student ID: 992316
  */
-
 public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardServerInterface {
     ServerGUI gui;
     private final Map<String, WhiteBoardClientInterface> connectedClients = new ConcurrentHashMap<>();
@@ -41,7 +43,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         super();
         this.port = port;
         this.hostUsername = hostUsername;
-        gui = new ServerGUI(this); // Ensured username is set
+        gui = new ServerGUI(this); 
     }
 
     public void setEventListener(ServerEventListener listener) {
@@ -58,7 +60,6 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         }
 
         if (client == null) {
-            client.onRegistrationRejected("An error occurred.");
             return;
         }
 
@@ -120,7 +121,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         WhiteBoardClientInterface client = connectedClients.remove(username);
         if (client != null) {
             try {
-                client.kickedFromServer(); // optional client callback
+                client.kickedFromServer();
             } catch (RemoteException e) {
                 // Do nothing
                 System.err.println("Error notifying kicked client: " + e.getMessage());
@@ -318,7 +319,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
             // Display username in users list (Even if nobody joined yet)
             broadcastUserList();
 
-            // FIXME add this to initialization/constructor of the GUI
+            // Set username in GUI
             gui.getCanvas().setUsername(hostUsername);
 
             // Whenever server draws locally, send it to all of the clients
@@ -356,8 +357,6 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();
-            // FIXME do we notify clients or handle it over there
-
         }
     }
 }

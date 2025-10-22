@@ -5,6 +5,12 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import com.formdev.flatlaf.FlatLightLaf;
 
+/**
+ * Waiting screen for clients to attempt to join whiteboard
+ * 
+ * @author Sally Arnold
+ *         Student ID: 992316
+ */
 public class WaitingScreen extends JFrame {
     private final JTextField usernameField;
     private final JButton connectButton;
@@ -12,7 +18,7 @@ public class WaitingScreen extends JFrame {
     private final JLabel spinnerLabel;
 
     public WaitingScreen(ActionListener onConnect) {
-        // Apply FlatLaf theme globally (if not already)
+        // Apply FlatLaf theme
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
         } catch (Exception e) {
@@ -26,25 +32,24 @@ public class WaitingScreen extends JFrame {
         setResizable(false);
 
         JPanel content = new JPanel(new BorderLayout());
-        // content.setBackground(UIManager.getColor("Panel.background"));
         content.setBackground(Color.WHITE);
 
-        // --- Title ---
+        // Title
         JLabel title = new JLabel("Join Whiteboard", SwingConstants.CENTER);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 26f));
 
-        // --- Username field ---
+        // Username field
         usernameField = new JTextField(20);
         usernameField.putClientProperty("JComponent.roundRect", true);
         usernameField.putClientProperty("JTextField.placeholderText", "Enter your username");
 
-        // --- Connect button ---
+        // Connect button
         connectButton = new JButton("Connect");
         connectButton.putClientProperty("JButton.buttonType", "roundRect");
         connectButton.setFont(connectButton.getFont().deriveFont(Font.BOLD));
         connectButton.addActionListener(onConnect);
 
-        // --- Message + spinner ---
+        // Message and spinner
         messageLabel = new JLabel("", SwingConstants.CENTER);
         messageLabel.setFont(messageLabel.getFont().deriveFont(16f));
         messageLabel.setForeground(UIManager.getColor("Label.foreground"));
@@ -52,12 +57,12 @@ public class WaitingScreen extends JFrame {
         spinnerLabel = new JLabel(new ImageIcon(getClass().getResource("/spinner.gif")), SwingConstants.CENTER);
         spinnerLabel.setVisible(false);
 
-
-        // --- Center layout ---
+        // Center layout
         JPanel centerPanel = new JPanel(new GridBagLayout());
         centerPanel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         gbc.insets = new Insets(20, 0, 10, 0);
         centerPanel.add(title, gbc);
 
@@ -77,8 +82,6 @@ public class WaitingScreen extends JFrame {
         content.add(centerPanel, BorderLayout.CENTER);
         setContentPane(content);
     }
-
-    // --- Helper Methods ---
 
     public String getUsername() {
         return usernameField.getText().trim();
@@ -100,10 +103,5 @@ public class WaitingScreen extends JFrame {
         messageLabel.setText(reason);
         usernameField.setEnabled(true);
         connectButton.setEnabled(true);
-    }
-
-    /** Set a custom spinner icon (e.g., animated GIF) */
-    public void setSpinnerIcon(Icon icon) {
-        spinnerLabel.setIcon(icon);
     }
 }

@@ -17,6 +17,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+/**
+ * 
+ * Whiteboard canvas where drawings are made
+ * 
+ * @author Sally Arnold
+ *         Student ID: 992316
+ */
 public class WhiteBoardCanvas extends JPanel {
 
     private Consumer<DrawAction> drawListener;
@@ -30,7 +37,6 @@ public class WhiteBoardCanvas extends JPanel {
     // Draw tool fields
     private int startX, startY;
     private int currentX, currentY;
-    private int mouseX, mouseY;
     private boolean drawing = false;
     private int drawStrokeSize = 2;
     private int eraserStrokeSize = 10;
@@ -80,7 +86,6 @@ public class WhiteBoardCanvas extends JPanel {
             public void mouseReleased(MouseEvent e) {
                 if (drawing && currentTool.isShapeTool()) {
                     // Commit line/shape to the canvas image
-                    // FIXME do other tools
                     DrawAction action = new DrawAction(currentTool, startX, startY, e.getX(), e.getY(), g2d.getColor(),
                             drawStrokeSize);
                     if (drawListener != null)
@@ -95,9 +100,6 @@ public class WhiteBoardCanvas extends JPanel {
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                // FIXME align with paint fn
-                mouseX = e.getX();
-                mouseY = e.getY();
                 // Draw the username bubble
                 repaint();
                 long now = System.currentTimeMillis();
@@ -111,15 +113,6 @@ public class WhiteBoardCanvas extends JPanel {
                     if (cursorListener != null) {
                         cursorListener.accept(pos);
                     }
-                    // new Thread(() -> {
-                    // try {
-                    // // client.getServerRef().broadcastCursorPosition(pos);
-                    // if (cursorListener != null)
-                    // cursorListener.accept(pos);
-                    // } catch (Exception ex) {
-                    // ex.printStackTrace();
-                    // }
-                    // }).start();
                 }
             }
 
@@ -127,10 +120,8 @@ public class WhiteBoardCanvas extends JPanel {
             public void mouseDragged(MouseEvent e) {
                 switch (currentTool) {
                     case FREE_DRAW:
-                        // TODO send over to the remote server
                         int x = e.getX();
                         int y = e.getY();
-                        // g2d.drawLine(prevX, prevY, x, y);
                         DrawAction action = new DrawAction(currentTool, prevX, prevY, x, y, g2d.getColor(),
                                 drawStrokeSize);
                         if (drawListener != null)
@@ -145,19 +136,12 @@ public class WhiteBoardCanvas extends JPanel {
                         // Update current mouse position for preview
                         currentX = e.getX();
                         currentY = e.getY();
-                        repaint(); // will trigger paintComponent to show preview
+                        repaint();
                         break;
 
                     case ERASE:
                         x = e.getX();
                         y = e.getY();
-                        Color originalColor = g2d.getColor();
-                        // TODO use getBackground() and support themes
-
-                        // g2d.setStroke(new BasicStroke(eraserStrokeSize, BasicStroke.CAP_ROUND,
-                        // BasicStroke.JOIN_ROUND));
-                        // g2d.drawLine(prevX, prevY, x, y);
-
                         action = new DrawAction(currentTool, prevX, prevY, x, y, Color.WHITE,
                                 eraserStrokeSize);
                         if (drawListener != null)
@@ -168,7 +152,6 @@ public class WhiteBoardCanvas extends JPanel {
                         prevY = y;
                         break;
                 }
-                // TODO notify network layer of new stroke segment for free draw & erase
             }
         });
     }
@@ -178,15 +161,14 @@ public class WhiteBoardCanvas extends JPanel {
     }
 
     private void initCanvas() {
-        // FIXME load from file if there is a file
-        // FIXME remove canbas image
         canvasImage = new BufferedImage(800, 600, BufferedImage.TYPE_INT_ARGB);
         g2d = canvasImage.createGraphics();
         g2d.setColor(Color.BLACK);
         // Make the stroke have circular ends
         g2d.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        clear(); // fill with white initially
+        // Fill with white
+        clear();
     }
 
     public void setUsername(String username) {
@@ -206,7 +188,7 @@ public class WhiteBoardCanvas extends JPanel {
             drawUsernameBubble(g, entry.getKey(), p.x, p.y);
         }
 
-        // === Local preview for drawing tools ===
+        // Local preview for drawing tools
 
         // Draw line preview if currently drawing
         if (currentTool == Tool.LINE && drawing) {
@@ -292,7 +274,6 @@ public class WhiteBoardCanvas extends JPanel {
         g.drawPolygon(xPoints, yPoints, numPoints);
     }
 
-    // FIXME make shorter
     public void drawOval(Graphics g, int x1, int y1, int x2, int y2) {
         int x, y;
         int xDia = Math.abs(x2 - x1);
@@ -327,15 +308,13 @@ public class WhiteBoardCanvas extends JPanel {
         g.drawRect(x, y, xDia, yDia);
     }
 
-    // FIXME thread safety for server
     /**
      * Permanently draw onto the canvas
      * 
      * @param action
      */
-    // TODO move this to drawAction
     public void applyDrawAction(DrawAction action) {
-        // draw using Graphics2D
+        // Draw using Graphics2D
         Stroke originalStroke = g2d.getStroke();
         Color originalColor = g2d.getColor();
         g2d.setColor(action.getColor());
@@ -348,7 +327,6 @@ public class WhiteBoardCanvas extends JPanel {
                 break;
 
             case TRIANGLE:
-                // FIXME use the coordinates from the action not the current setup of the canvas
                 drawTriangle(g2d, action.getX1(), action.getY1(), action.getX2(), action.getY2());
                 drawing = false;
                 repaint();
@@ -377,7 +355,7 @@ public class WhiteBoardCanvas extends JPanel {
 
     }
 
-    // FIXME ensure username is set
+    // NOTE: ensure username is set
     private void drawUsernameBubble(Graphics g, String text, int x, int y) {
         FontMetrics fm = g.getFontMetrics();
         int textWidth = fm.stringWidth(text);
@@ -387,30 +365,23 @@ public class WhiteBoardCanvas extends JPanel {
         int bubbleWidth = textWidth + padding * 2;
         int bubbleHeight = textHeight;
 
-        int bubbleX = x + 12; // offset so it's not under the cursor
+        // Offset so it's not under the cursor
+        int bubbleX = x + 12;
         int bubbleY = y - 20;
 
-        // bubble background
+        // Bubble background
         g.setColor(new Color(0, 0, 0, 150));
         g.fillRoundRect(bubbleX, bubbleY, bubbleWidth, bubbleHeight, 10, 10);
 
-        // text
+        // Text
         g.setColor(Color.WHITE);
         g.drawString(text, bubbleX + padding, bubbleY + textHeight - 4);
     }
 
-    // FIXME convert to DrawAction objects which will also allow select & delete
-    // objects
-    // FIXME this scales the image, does it stretch it if the server GUI gets
-    // stretched?
+    // TODO improvement: Save the history DrawAction objects which will also allow
+    // select & delete objects
     public void loadFromFile(File file) throws IOException {
-        // BufferedImage backgroundImage = ImageIO.read(file);
-        // g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
-        // repaint();
-        // FIXME move this to the initialization part ?
-
         canvasImage = ImageIO.read(file);
-
         Stroke previousStroke = g2d.getStroke();
         Color previousColor = g2d.getColor();
         g2d.dispose();
@@ -421,18 +392,12 @@ public class WhiteBoardCanvas extends JPanel {
     }
 
     public void saveCanvasToFile(File file) throws IOException {
-        // BufferedImage image = new BufferedImage(getWidth(), getHeight(),
-        // BufferedImage.TYPE_INT_ARGB);
-        // Graphics2D g2 = image.createGraphics();
-        // paint(g2);
-        // g2.dispose();
         ImageIO.write(canvasImage, "png", file);
     }
 
     public void loadCanvasImage(byte[] imageData) {
         try {
             canvasImage = ImageIO.read(new ByteArrayInputStream(imageData));
-            // FIXME move this to the initialization part ?
             Stroke previousStroke = g2d.getStroke();
             Color previousColor = g2d.getColor();
             g2d.dispose();

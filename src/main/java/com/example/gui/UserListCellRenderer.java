@@ -3,6 +3,12 @@ package com.example.gui;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Custom renderer to add option of deleting to User List view
+ * 
+ * @author Sally Arnold
+ *         Student ID: 992316
+ */
 public class UserListCellRenderer extends JPanel implements ListCellRenderer<String> {
     private final JLabel nameLabel = new JLabel();
     private final JLabel deleteIcon = new JLabel();
@@ -40,13 +46,12 @@ public class UserListCellRenderer extends JPanel implements ListCellRenderer<Str
             setBackground(Color.WHITE);
         }
 
-        // Only show ❌ for non-host users (if we're the server)
+        // Only show delete for whiteboard host
         if (showKickIcons && !value.equals(hostUsername)) {
             deleteIcon.setVisible(true);
         } else {
             deleteIcon.setVisible(false);
         }
-
 
         return this;
     }

@@ -8,6 +8,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
+/**
+ * Chat window
+ * 
+ * @author Sally Arnold
+ *         Student ID: 992316
+ */
 public class ChatPanel extends JPanel {
     private final JTextArea chatArea;
     private final JTextField inputField;
@@ -23,27 +29,20 @@ public class ChatPanel extends JPanel {
             System.err.println("Failed to initialize FlatLaf: " + e);
         }
 
-
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createTitledBorder("Chat"));
 
-        // setBackground(Color.WHITE);
-
-        // === Chat display area ===
+        // Chat display area
         chatArea = new JTextArea();
         chatArea.setEditable(false);
         chatArea.setLineWrap(false);
-        // chatArea.setWrapStyleWord(true);
-        // chatArea.setBackground(Color.WHITE);
 
         JScrollPane scrollPane = new JScrollPane(chatArea);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         add(scrollPane, BorderLayout.CENTER);
-        // scrollPane.setBackground(Color.WHITE);
 
-        // === Input area ===
+        // Input area
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
-        // inputPanel.setBackground(Color.WHITE);
         inputField = new JTextField(10);
         inputField.putClientProperty("JComponent.roundRect", true);
 
@@ -54,7 +53,7 @@ public class ChatPanel extends JPanel {
         inputPanel.add(sendButton, BorderLayout.EAST);
         add(inputPanel, BorderLayout.SOUTH);
 
-        // === Events ===
+        // Events
         sendButton.addActionListener(e -> sendMessage());
         inputField.addActionListener(e -> sendMessage());
     }
@@ -77,9 +76,9 @@ public class ChatPanel extends JPanel {
     }
 
     public void loadHistory(ArrayList<ChatMessage> history) {
-    for (ChatMessage msg : history) {
-        appendMessage(msg.toString());
+        for (ChatMessage msg : history) {
+            appendMessage(msg.toString());
+        }
     }
-}
 
 }
