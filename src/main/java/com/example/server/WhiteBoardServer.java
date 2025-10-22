@@ -124,7 +124,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
                 client.kickedFromServer();
             } catch (RemoteException e) {
                 // Do nothing
-                System.err.println("Error notifying kicked client: " + e.getMessage());
+                System.err.println("[WARN] Error notifying kicked client: " + e.getMessage());
             }
             broadcastUserList();
         }
@@ -278,7 +278,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     }
 
     public synchronized void notifyShutdown(String reason) {
-        System.out.println("[INFO] Notifying clients of server shutdown...");
+        System.out.println("Notifying clients of server shutdown...");
         for (var entry : connectedClients.entrySet()) {
             String user = entry.getKey();
             WhiteBoardClientInterface client = entry.getValue();
@@ -298,7 +298,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
             LocateRegistry.getRegistry(port).unbind("WhiteBoardService");
             System.out.println("Server shut down cleanly.");
         } catch (Exception e) {
-            System.err.println("Error shutting down server: " + e.getMessage());
+            System.err.println("[ERROR] Error shutting down server: " + e.getMessage());
         }
     }
 
@@ -328,7 +328,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
                     broadcastDrawAction(action);
                 } catch (Exception e) {
                     // Remote exception handled in method itself
-                    System.err.println("An error occured while broadcasting draw action.");
+                    System.err.println("[ERROR] An error occured while broadcasting draw action.");
                 }
             });
 
@@ -338,7 +338,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
                     broadcastCursorPosition(pos);
                 } catch (Exception e) {
                     // Remote exception handled in method itself
-                    System.err.println("An error occured while broadcasting cursor position.");
+                    System.err.println("[ERROR] An error occured while broadcasting cursor position.");
                 }
             });
 
@@ -350,7 +350,7 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
                     sendChatMessage(new ChatMessage(hostUsername, message));
                 } catch (RemoteException e) {
                     // Remote exception handled in method itself
-                    System.err.println("An error occured while sending chat message.");
+                    System.err.println("[ERROR] An error occured while sending chat message.");
                 }
             });
 

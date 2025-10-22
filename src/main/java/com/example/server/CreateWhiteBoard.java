@@ -34,7 +34,7 @@ public class CreateWhiteBoard {
                 server.shutdownServer();
             }));
         } catch (Exception e) {
-            System.err.println("Failed to start Whiteboard Server: " + e.getMessage());
+            System.err.println("[ERROR] Failed to start Whiteboard Server: " + e.getMessage());
             e.printStackTrace();
         }
 

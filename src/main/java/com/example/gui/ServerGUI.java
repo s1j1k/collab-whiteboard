@@ -173,7 +173,7 @@ public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListe
     }
 
     private void onSaveFile() {
-        System.out.println("[Server] Saving current whiteboard...");
+        System.out.println("Saving current whiteboard...");
         // Serialize whiteboard state
         try {
             canvas.saveCanvasToFile(whiteboardFile);
@@ -185,7 +185,7 @@ public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListe
     }
 
     private void onSaveAsFile() {
-        System.out.println("[Server] Saving whiteboard as...");
+        System.out.println("Saving whiteboard as...");
         JFileChooser chooser = new JFileChooser();
         FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
                 "Image Files (JPG, JPEG, PNG, GIF)", "jpg", "jpeg", "png", "gif");
@@ -196,7 +196,7 @@ public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListe
             try {
                 canvas.saveCanvasToFile(whiteboardFile);
             } catch (IOException e) {
-                System.err.println("Server failed to save whiteboard to file." + e.getMessage());
+                System.err.println("[ERROR] Server failed to save whiteboard to file." + e.getMessage());
                 // Call shutdown hooks and exit
                 System.exit(1);
             }
@@ -204,7 +204,7 @@ public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListe
     }
 
     private void onCloseFile() {
-        System.out.println("[Server] Closing current whiteboard...");
+        System.out.println("Closing current whiteboard...");
         dispose(); // Close the window
     }
 
