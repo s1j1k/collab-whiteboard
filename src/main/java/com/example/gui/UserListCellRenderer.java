@@ -7,7 +7,6 @@ import java.awt.*;
  * Custom renderer to add option of deleting to User List view
  * 
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class UserListCellRenderer extends JPanel implements ListCellRenderer<String> {
     private final JLabel nameLabel = new JLabel();

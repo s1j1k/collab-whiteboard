@@ -9,7 +9,6 @@ import com.formdev.flatlaf.FlatLightLaf;
  * Waiting screen for clients to attempt to join whiteboard
  * 
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class WaitingScreen extends JFrame {
     private final JTextField usernameField;

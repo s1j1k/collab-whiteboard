@@ -7,7 +7,6 @@ import javax.swing.JOptionPane;
  * Client entry point
  * 
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class JoinWhiteBoard {
 

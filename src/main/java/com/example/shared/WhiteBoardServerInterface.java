@@ -7,7 +7,6 @@ import java.util.ArrayList;
 /**
  * Define what messages can be sent from Client to Server
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public interface WhiteBoardServerInterface extends Remote {
     void registerClient(String username, WhiteBoardClientInterface client) throws RemoteException;

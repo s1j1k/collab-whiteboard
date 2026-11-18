@@ -11,7 +11,6 @@ import com.formdev.flatlaf.FlatLightLaf;
  * Whiteboard tool bar
  * 
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class ToolBarPanel extends JPanel {
 

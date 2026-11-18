@@ -5,7 +5,6 @@ import java.io.Serializable;
 
 /**
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class DrawAction implements Serializable {
     private final int x1, y1, x2, y2;

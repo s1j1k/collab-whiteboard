@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
@@ -26,190 +29,200 @@ import com.example.shared.WhiteBoardServerInterface;
 
 /**
  * Whiteboard RMI Server
- * 
+ *
+ * Concurrency model: the server lock only guards shared state (client map,
+ * chat history) and the order in which updates are queued. Remote calls to
+ * clients never run under the lock. Each client has its own single-threaded
+ * outbound queue, so updates reach every client in the same order, and a
+ * slow or dead client cannot stall the other clients or the host's GUI.
+ *
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardServerInterface {
     ServerGUI gui;
-    private final Map<String, WhiteBoardClientInterface> connectedClients = new ConcurrentHashMap<>();
+    private final Map<String, ClientChannel> connectedClients = new ConcurrentHashMap<>();
     private final Map<String, WhiteBoardClientInterface> pendingClients = new ConcurrentHashMap<>();
-    private List<ChatMessage> chatHistory = new ArrayList<ChatMessage>();
+    private final List<ChatMessage> chatHistory = new ArrayList<ChatMessage>();
     private int port;
     private String hostUsername;
     private ServerEventListener eventListener;
+
+    /** A remote call to make on one client. */
+    @FunctionalInterface
+    interface ClientCall {
+        void invoke(WhiteBoardClientInterface client) throws RemoteException;
+    }
+
+    /** Outbound queue for one client: calls run in order on a dedicated thread. */
+    private final class ClientChannel {
+        final String username;
+        final WhiteBoardClientInterface stub;
+        final ExecutorService outbox;
+
+        ClientChannel(String username, WhiteBoardClientInterface stub) {
+            this.username = username;
+            this.stub = stub;
+            this.outbox = Executors.newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "outbox-" + username);
+                t.setDaemon(true);
+                return t;
+            });
+        }
+
+        void send(ClientCall call) {
+            if (outbox.isShutdown()) {
+                return;
+            }
+            outbox.execute(() -> {
+                try {
+                    call.invoke(stub);
+                } catch (RemoteException e) {
+                    System.err.println("[WARN] Lost connection to client: " + username);
+                    dropClient(username, this);
+                }
+            });
+        }
+    }
 
     protected WhiteBoardServer(int port, String hostUsername) throws RemoteException {
         super();
         this.port = port;
         this.hostUsername = hostUsername;
-        gui = new ServerGUI(this); 
+        gui = new ServerGUI(this);
     }
 
     public void setEventListener(ServerEventListener listener) {
         this.eventListener = listener;
     }
 
-    @Override
-    public synchronized void registerClient(String username, WhiteBoardClientInterface client)
-            throws RemoteException {
-
-        if (username == null) {
-            client.onRegistrationRejected("Please provide username.");
-            return;
+    /** Queue a call for every connected client. Never blocks on the network. */
+    private void broadcast(ClientCall call) {
+        for (ClientChannel channel : connectedClients.values()) {
+            channel.send(call);
         }
+    }
 
+    /** Remove a client whose channel failed, unless it was already replaced or removed. */
+    private void dropClient(String username, ClientChannel channel) {
+        synchronized (this) {
+            if (!connectedClients.remove(username, channel)) {
+                return;
+            }
+            broadcastUserList();
+        }
+        channel.outbox.shutdown();
+    }
+
+    @Override
+    public void registerClient(String username, WhiteBoardClientInterface client)
+            throws RemoteException {
         if (client == null) {
             return;
         }
 
-        if (username.equals(hostUsername) || connectedClients.containsKey(username)
-                || pendingClients.containsKey(username)) {
-            client.onRegistrationRejected("Username is already taken. Please choose a different username.");
+        String rejection = null;
+        synchronized (this) {
+            if (username == null) {
+                rejection = "Please provide username.";
+            } else if (username.equals(hostUsername) || connectedClients.containsKey(username)
+                    || pendingClients.containsKey(username)) {
+                rejection = "Username is already taken. Please choose a different username.";
+            } else {
+                // Hold as pending until the host approves or denies
+                pendingClients.put(username, client);
+            }
+        }
+
+        if (rejection != null) {
+            client.onRegistrationRejected(rejection);
             return;
         }
 
-        // Temporarily store as pending
-        pendingClients.put(username, client);
-
-        // Notify the GUI asynchronously
+        // The GUI will call approveClient(username) or denyClient(username)
         if (eventListener != null) {
             eventListener.onJoinRequest(username);
         }
-
-        // The GUI will call approveClient(username) or denyClient(username)
     }
 
     public synchronized void approveClient(String username) {
         WhiteBoardClientInterface client = pendingClients.remove(username);
         if (client != null) {
-            try {
-                client.onRegistrationApproved();
-
-            } catch (RemoteException e) {
-                System.err.println("[WARN] Lost connection to client: " + username);
-                // Don't add to list of connected clients
-                return;
-            }
-            connectedClients.put(username, client);
+            ClientChannel channel = new ClientChannel(username, client);
+            // Approval is queued first, so it reaches the client before any broadcast
+            channel.send(WhiteBoardClientInterface::onRegistrationApproved);
+            connectedClients.put(username, channel);
             broadcastUserList();
             System.out.println("Approved client: " + username);
-
         }
     }
 
-    public synchronized void denyClient(String username, String reason) {
-        try {
-            pendingClients.get(username).onRegistrationRejected(reason);
-        } catch (RemoteException e) {
-            // Do nothing if unable to reject a client
-            System.err.println("[WARN] Lost connection to client: " + username);
+    public void denyClient(String username, String reason) {
+        WhiteBoardClientInterface client = pendingClients.remove(username);
+        if (client == null) {
+            return;
         }
-        pendingClients.remove(username);
+        // Notify off the GUI thread so a dead client cannot freeze the host
+        new Thread(() -> {
+            try {
+                client.onRegistrationRejected(reason);
+            } catch (RemoteException e) {
+                System.err.println("[WARN] Lost connection to client: " + username);
+            }
+        }, "deny-" + username).start();
         System.out.println("Denied client: " + username);
     }
 
     @Override
-    public synchronized void unregisterClient(String username) throws RemoteException {
-        connectedClients.remove(username);
-        broadcastUserList();
+    public void unregisterClient(String username) throws RemoteException {
+        ClientChannel channel;
+        synchronized (this) {
+            channel = connectedClients.remove(username);
+            if (channel == null) {
+                return;
+            }
+            broadcastUserList();
+        }
+        channel.outbox.shutdown();
         System.out.println("Client disconnected: " + username);
     }
 
     @Override
-    public synchronized void kickUser(String username) throws RemoteException {
-        WhiteBoardClientInterface client = connectedClients.remove(username);
-        if (client != null) {
-            try {
-                client.kickedFromServer();
-            } catch (RemoteException e) {
-                // Do nothing
-                System.err.println("[WARN] Error notifying kicked client: " + e.getMessage());
+    public void kickUser(String username) throws RemoteException {
+        ClientChannel channel;
+        synchronized (this) {
+            channel = connectedClients.remove(username);
+            if (channel == null) {
+                return;
             }
             broadcastUserList();
         }
+        channel.send(WhiteBoardClientInterface::kickedFromServer);
+        channel.outbox.shutdown();
     }
 
     @Override
     public synchronized void sendChatMessage(ChatMessage message) throws RemoteException {
-        System.out.println("Message received: " + message);
-        // Store the message in chat history
         chatHistory.add(message);
-
-        // Add to server GUI chat panel
-        gui.getChatPanel().appendMessage(message.toString());
-
-        // Send to all client chat windows
-        System.out.println("Updating client chat windows...");
-        ArrayList<String> disconnectedClients = new ArrayList<>();
-        for (var entry : connectedClients.entrySet()) {
-            String user = entry.getKey();
-            WhiteBoardClientInterface client = entry.getValue();
-            try {
-                client.receiveChatMessage(message);
-            } catch (RemoteException e) {
-                System.err.println("[WARN] Lost connection to client: " + user);
-                // Mark for removal later
-                disconnectedClients.add(user);
-            }
-        }
-
-        if (disconnectedClients.size() > 0) {
-            disconnectedClients.forEach(u -> connectedClients.remove(u));
-            broadcastUserList();
-        }
-
+        SwingUtilities.invokeLater(() -> gui.getChatPanel().appendMessage(message.toString()));
+        broadcast(c -> c.receiveChatMessage(message));
     }
 
     @Override
     public synchronized void broadcastDrawAction(DrawAction action) throws RemoteException {
-        // Update the server GUI canvas
-        System.out.println("Updating server canvas...");
-        SwingUtilities.invokeLater(() -> gui.getCanvas().applyDrawAction(action));
-
-        // Update client canvases
-        System.out.println("Updating client canvases...");
-        ArrayList<String> disconnectedClients = new ArrayList<>();
-        for (var entry : connectedClients.entrySet()) {
-            String user = entry.getKey();
-            WhiteBoardClientInterface client = entry.getValue();
-            try {
-                client.receiveDrawAction(action);
-            } catch (RemoteException e) {
-                System.err.println("[WARN] Lost connection to client: " + user);
-                // Mark for removal later
-                disconnectedClients.add(user);
-            }
-        }
-        if (disconnectedClients.size() > 0) {
-            disconnectedClients.forEach(u -> connectedClients.remove(u));
-            broadcastUserList();
-        }
+        // Apply on the server canvas and queue for clients under one lock, so the
+        // server and every client see draw actions in the same order
+        SwingUtilities.invokeLater(() -> {
+            gui.getCanvas().applyDrawAction(action);
+            gui.markModified();
+        });
+        broadcast(c -> c.receiveDrawAction(action));
     }
 
     @Override
-    public synchronized void broadcastCursorPosition(CursorPosition pos) throws RemoteException {
-        // Update server cursor positions list
+    public void broadcastCursorPosition(CursorPosition pos) throws RemoteException {
+        // Cursor positions are cosmetic and frequent: no ordering lock needed
         SwingUtilities.invokeLater(() -> gui.getCanvas().updateCursorPosition(pos));
-
-        // Update clients cursor positions list
-        ArrayList<String> disconnectedClients = new ArrayList<>();
-        for (var entry : connectedClients.entrySet()) {
-            String user = entry.getKey();
-            WhiteBoardClientInterface client = entry.getValue();
-            try {
-                client.updateCursorPosition(pos);
-            } catch (RemoteException e) {
-                System.err.println("[WARN] Lost connection to client: " + user);
-                // Mark for removal later
-                disconnectedClients.add(user);
-            }
-        }
-
-        if (disconnectedClients.size() > 0) {
-            disconnectedClients.forEach(u -> connectedClients.remove(u));
-            broadcastUserList();
-        }
+        broadcast(c -> c.updateCursorPosition(pos));
     }
 
     private synchronized void broadcastUserList() {
@@ -217,25 +230,8 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
         // Add server owner's username to client usernames
         fullUsersList.addFirst(hostUsername);
         UserListUpdate update = new UserListUpdate(fullUsersList);
-        // Update server gui
         SwingUtilities.invokeLater(() -> gui.updateUserList(update.getUsernames()));
-        // Update clients gui
-        ArrayList<String> disconnectedClients = new ArrayList<>();
-        for (var entry : connectedClients.entrySet()) {
-            String user = entry.getKey();
-            WhiteBoardClientInterface client = entry.getValue();
-            try {
-                client.receiveUserListUpdate(update);
-            } catch (RemoteException e) {
-                System.err.println("[WARN] Lost connection to client: " + user);
-                // Mark for removal later
-                disconnectedClients.add(user);
-            }
-        }
-        if (disconnectedClients.size() > 0) {
-            disconnectedClients.forEach(u -> connectedClients.remove(u));
-            broadcastUserList();
-        }
+        broadcast(c -> c.receiveUserListUpdate(update));
     }
 
     @Override
@@ -255,43 +251,35 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
     }
 
     public synchronized void broadcastCanvasImage() throws RemoteException {
-        // Send out updated canvas
-        // Update clients gui
         byte[] imageData = getCanvasSnapshot();
-        ArrayList<String> disconnectedClients = new ArrayList<>();
-        for (var entry : connectedClients.entrySet()) {
-            String user = entry.getKey();
-            WhiteBoardClientInterface client = entry.getValue();
-            try {
-                client.receiveCanvasImage(imageData);
-            } catch (RemoteException e) {
-                System.err.println("[WARN] Lost connection to client: " + user);
-                // Mark for removal later
-                disconnectedClients.add(user);
-            }
-        }
-
-        if (disconnectedClients.size() > 0) {
-            disconnectedClients.forEach(u -> connectedClients.remove(u));
-            broadcastUserList();
-        }
+        broadcast(c -> c.receiveCanvasImage(imageData));
     }
 
-    public synchronized void notifyShutdown(String reason) {
+    /** Tell every client the host is leaving, waiting briefly for delivery. */
+    public void notifyShutdown(String reason) {
         System.out.println("Notifying clients of server shutdown...");
-        for (var entry : connectedClients.entrySet()) {
-            String user = entry.getKey();
-            WhiteBoardClientInterface client = entry.getValue();
+        List<ClientChannel> channels;
+        synchronized (this) {
+            channels = new ArrayList<>(connectedClients.values());
+            connectedClients.clear();
+        }
+        for (ClientChannel channel : channels) {
+            channel.send(c -> c.onServerShutdown(reason));
+            channel.outbox.shutdown();
+        }
+        for (ClientChannel channel : channels) {
             try {
-                client.onServerShutdown(reason);
-            } catch (RemoteException e) {
-                // No need to remove client here — server is shutting down anyway
-                System.err.println("[WARN] Could not notify " + user + " of shutdown.");
+                if (!channel.outbox.awaitTermination(2, TimeUnit.SECONDS)) {
+                    System.err.println("[WARN] Could not notify " + channel.username + " of shutdown.");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
             }
         }
     }
 
-    public synchronized void shutdownServer() {
+    public void shutdownServer() {
         notifyShutdown("Host has closed the whiteboard.");
         try {
             UnicastRemoteObject.unexportObject(this, true);
@@ -327,7 +315,6 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
                 try {
                     broadcastDrawAction(action);
                 } catch (Exception e) {
-                    // Remote exception handled in method itself
                     System.err.println("[ERROR] An error occured while broadcasting draw action.");
                 }
             });
@@ -337,19 +324,16 @@ public class WhiteBoardServer extends UnicastRemoteObject implements WhiteBoardS
                 try {
                     broadcastCursorPosition(pos);
                 } catch (Exception e) {
-                    // Remote exception handled in method itself
                     System.err.println("[ERROR] An error occured while broadcasting cursor position.");
                 }
             });
 
             // Send messages to clients
             gui.getChatPanel().setChatListener(message -> {
-                // Send message to server via RMI
                 System.out.println("Sending: " + message);
                 try {
                     sendChatMessage(new ChatMessage(hostUsername, message));
                 } catch (RemoteException e) {
-                    // Remote exception handled in method itself
                     System.err.println("[ERROR] An error occured while sending chat message.");
                 }
             });

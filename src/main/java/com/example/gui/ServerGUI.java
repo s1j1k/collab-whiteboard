@@ -3,6 +3,8 @@ package com.example.gui;
 import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -24,7 +26,6 @@ import com.example.shared.ServerEventListener;
  * Server GUI
  * 
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListener {
 
@@ -33,6 +34,9 @@ public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListe
 
     WhiteBoardServer server;
 
+    // Set by any draw action since the last save, open or new; read on the EDT
+    private boolean unsavedChanges = false;
+
     public ServerGUI(WhiteBoardServer server) {
         super("Server Whiteboard");
 
@@ -40,6 +44,15 @@ public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListe
         server.setEventListener(this);
 
         setJMenuBar(createMenuBar());
+
+        // Ask before discarding unsaved work when the window is closed
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                onCloseFile();
+            }
+        });
         userList.setCellRenderer(new UserListCellRenderer(true, server.getUsername()));
 
         userList.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -132,80 +145,118 @@ public class ServerGUI extends AbstractWhiteBoardGUI implements ServerEventListe
         return menuBar;
     }
 
-    // File operation handlers
-    private void onNewFile() {
-        System.out.println("New whiteboard created.");
-        // Clear canvas, broadcast reset to clients
+    /** Called on the EDT whenever the canvas changes. */
+    public void markModified() {
+        unsavedChanges = true;
+    }
 
-        // Reset to default file name
-        whiteboardFile = new File("Whiteboard.png");
-        canvas.clear();
+    /**
+     * If there are unsaved changes, offer to save them.
+     *
+     * @return true if it is fine to continue (saved, or changes discarded)
+     */
+    private boolean confirmDiscardUnsaved() {
+        if (!unsavedChanges) {
+            return true;
+        }
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                "Save changes to " + whiteboardFile.getName() + "?",
+                "Unsaved Changes",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (choice == JOptionPane.YES_OPTION) {
+            return onSaveFile();
+        }
+        return choice == JOptionPane.NO_OPTION;
+    }
 
+    private void showError(String message, Exception e) {
+        System.err.println("[ERROR] " + message + " " + e.getMessage());
+        JOptionPane.showMessageDialog(this, message + "\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private JFileChooser imageChooser() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileFilter(new FileNameExtensionFilter(
+                "Image Files (JPG, JPEG, PNG, GIF)", "jpg", "jpeg", "png", "gif"));
+        return chooser;
+    }
+
+    private void broadcastCanvas() {
         try {
             server.broadcastCanvasImage();
         } catch (RemoteException e) {
-            System.err.println("[ERROR] Server failed while boradcasting canvas image." + e.getMessage());
-            // Call shutdown hooks and exit
-            System.exit(1);
+            showError("Failed to send the whiteboard to clients.", e);
         }
+    }
+
+    // File operation handlers
+    private void onNewFile() {
+        if (!confirmDiscardUnsaved()) {
+            return;
+        }
+        whiteboardFile = new File("Whiteboard.png");
+        canvas.clear();
+        unsavedChanges = false;
+        broadcastCanvas();
+        System.out.println("New whiteboard created.");
     }
 
     private void onOpenFile() {
-        System.out.println("Opening existing whiteboard...");
-        JFileChooser chooser = new JFileChooser();
-
-        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
-                "Image Files (JPG, JPEG, PNG, GIF)", "jpg", "jpeg", "png", "gif");
-        chooser.setFileFilter(imageFilter);
-
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            // Load saved whiteboard
-            whiteboardFile = chooser.getSelectedFile();
-            try {
-                canvas.loadFromFile(whiteboardFile);
-                server.broadcastCanvasImage();
-            } catch (IOException e) {
-                System.err.println("[ERROR] Server failed to load whiteboard from file." + e.getMessage());
-                // Call shutdown hooks and exit
-                System.exit(1);
-            }
+        if (!confirmDiscardUnsaved()) {
+            return;
         }
+        JFileChooser chooser = imageChooser();
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File file = chooser.getSelectedFile();
+        try {
+            canvas.loadFromFile(file);
+        } catch (IOException e) {
+            showError("Could not open " + file.getName() + ".", e);
+            return;
+        }
+        whiteboardFile = file;
+        unsavedChanges = false;
+        broadcastCanvas();
     }
 
-    private void onSaveFile() {
-        System.out.println("Saving current whiteboard...");
-        // Serialize whiteboard state
+    /** @return true if the whiteboard was saved */
+    private boolean onSaveFile() {
         try {
             canvas.saveCanvasToFile(whiteboardFile);
         } catch (IOException e) {
-            System.err.println("[ERROR] Server failed to save canvas to file." + e.getMessage());
-            // Call shutdown hooks and exit
-            System.exit(1);
+            showError("Could not save " + whiteboardFile.getName() + ".", e);
+            return false;
         }
+        unsavedChanges = false;
+        System.out.println("Saved whiteboard to " + whiteboardFile);
+        return true;
     }
 
-    private void onSaveAsFile() {
-        System.out.println("Saving whiteboard as...");
-        JFileChooser chooser = new JFileChooser();
-        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
-                "Image Files (JPG, JPEG, PNG, GIF)", "jpg", "jpeg", "png", "gif");
-        chooser.setFileFilter(imageFilter);
-        if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            // Write to selected file
-            whiteboardFile = chooser.getSelectedFile();
-            try {
-                canvas.saveCanvasToFile(whiteboardFile);
-            } catch (IOException e) {
-                System.err.println("[ERROR] Server failed to save whiteboard to file." + e.getMessage());
-                // Call shutdown hooks and exit
-                System.exit(1);
-            }
+    private boolean onSaveAsFile() {
+        JFileChooser chooser = imageChooser();
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return false;
         }
+        File file = chooser.getSelectedFile();
+        // The canvas is always written as PNG
+        if (!file.getName().toLowerCase().endsWith(".png")) {
+            file = new File(file.getParentFile(), file.getName() + ".png");
+        }
+        whiteboardFile = file;
+        return onSaveFile();
     }
 
     private void onCloseFile() {
-        System.out.println("Closing current whiteboard...");
-        dispose(); // Close the window
+        if (!confirmDiscardUnsaved()) {
+            return;
+        }
+        System.out.println("Closing whiteboard...");
+        // The shutdown hook notifies clients before the JVM exits
+        System.exit(0);
     }
 
 }

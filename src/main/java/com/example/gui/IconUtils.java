@@ -8,7 +8,6 @@ import java.awt.*;
  * Helper class to load and resize icons from resources
  * 
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class IconUtils {
     public static ImageIcon loadScaledIcon(String path, int width, int height) {

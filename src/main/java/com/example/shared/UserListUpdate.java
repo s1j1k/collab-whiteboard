@@ -5,7 +5,6 @@ import java.util.List;
 
 /**
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class UserListUpdate implements Serializable {
     private final List<String> usernames;

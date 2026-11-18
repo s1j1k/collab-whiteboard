@@ -8,7 +8,6 @@ import java.awt.*;
  * Stroke size slider
  * 
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class StrokeSizeSliderPanel extends JPanel {
     private final JSlider strokeSizeSlider;

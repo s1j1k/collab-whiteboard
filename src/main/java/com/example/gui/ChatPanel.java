@@ -12,7 +12,6 @@ import java.util.ArrayList;
  * Chat window
  * 
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class ChatPanel extends JPanel {
     private final JTextArea chatArea;

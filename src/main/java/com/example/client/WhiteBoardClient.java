@@ -22,7 +22,6 @@ import com.example.shared.WhiteBoardServerInterface;
 
 /**
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class WhiteBoardClient extends UnicastRemoteObject implements WhiteBoardClientInterface {
 

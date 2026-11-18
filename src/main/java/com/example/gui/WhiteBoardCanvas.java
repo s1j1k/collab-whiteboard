@@ -22,7 +22,6 @@ import java.util.function.Consumer;
  * Whiteboard canvas where drawings are made
  * 
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class WhiteBoardCanvas extends JPanel {
 

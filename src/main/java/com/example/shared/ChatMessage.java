@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 
 /**
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class ChatMessage implements Serializable {
     private final String sender;

@@ -9,7 +9,6 @@ import java.awt.*;
  * Base abstract class for Whiteboard GUIs
  * 
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public abstract class AbstractWhiteBoardGUI extends JFrame {
 

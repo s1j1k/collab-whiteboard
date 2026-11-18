@@ -5,7 +5,6 @@ package com.example.server;
  * Launches Whiteboard RMI Server
  * 
  * @author Sally Arnold
- *         Student ID: 992316
  */
 public class CreateWhiteBoard {
     public static void main(String[] args) {
